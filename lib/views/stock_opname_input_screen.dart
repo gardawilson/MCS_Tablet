@@ -3,8 +3,10 @@ import 'package:provider/provider.dart';
 import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import '../view_models/stock_opname_input_view_model.dart';
 import '../view_models/master_data_view_model.dart';
+import '../view_models/attachment_so_view_model.dart';
 import '../widgets/loading_skeleton.dart';
-import '../widgets/add_manual_dialog.dart';
+import '../widgets/attachment_so_dialog.dart';
+import '../widgets/detail_asset_dialog.dart';
 import '../views/barcode_qr_scan_screen.dart';
 import '../models/company_model.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
@@ -168,9 +170,44 @@ class _StockOpnameInputScreenState extends State<StockOpnameInputScreen> {
                           return Card(
                             margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
                             child: ListTile(
-                              title: Text(asset.assetName, style: TextStyle(fontWeight: FontWeight.bold)),
+                              title: Text(
+                                asset.assetName,
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
                               subtitle: Text(asset.assetCode),
                               leading: const Icon(Icons.inventory, color: Colors.blue),
+                              trailing: asset.hasNotBeenPrinted == 1
+                                  ? const Icon(Icons.check_circle, color: Colors.green)
+                                  : const SizedBox(),
+                              onTap: () {
+                                if (asset.hasNotBeenPrinted == 0) {
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => MultiProvider(
+                                      providers: [
+                                        ChangeNotifierProvider(create: (_) => AttachmentSOViewModel()),
+                                        ChangeNotifierProvider(create: (_) => MasterDataViewModel()),
+                                      ],
+                                      child: AttachmentSODialog(
+                                        assetCode: asset.assetCode,
+                                        noSO: widget.noSO, // Kirim assetCode dan noSO ke dialog
+                                      ),
+                                    ),
+                                  );
+                                } else {
+                                  // Tampilkan dialog khusus jika hasNotBeenPrinted != 1
+                                  showDialog(
+                                    context: context,
+                                    builder: (context) => DetailAssetDialog(
+                                      assetCode: asset.assetCode,
+                                      assetName: asset.assetName,
+                                      assetImage: asset.assetImage,
+                                      statusSO: asset.statusSO,
+                                      username: asset.username,
+                                    ),
+                                  );
+                                }
+                              },
                             ),
                           );
                         },

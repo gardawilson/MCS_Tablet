@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../view_models/user_profile_view_model.dart';
 import '../widgets/user_profile_dialog.dart'; // Impor UserProfileDialog
+import '../widgets/status_so_dialog.dart'; // Impor UserProfileDialog
 // import 'mapping_lokasi_screen.dart'; // Impor MappingLokasiScreen
 
 class HomeScreen extends StatelessWidget {
@@ -66,6 +67,16 @@ class HomeScreen extends StatelessWidget {
                   icon: Icons.checklist_rtl_rounded,
                   onTap: () {
                     Navigator.pushNamed(context, '/dashboard');
+                  },
+                ),
+                const SizedBox(height: 24),
+
+                _buildMenuCard(
+                  context,
+                  title: 'Status',
+                  icon: Icons.list_alt,
+                  onTap: () {
+                    StatusSODialog.show(context);
                   },
                 ),
                 const SizedBox(height: 24),

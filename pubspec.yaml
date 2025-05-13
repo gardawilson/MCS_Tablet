@@ -55,7 +55,7 @@ dependencies:
   awesome_dialog: ^3.2.1
   awesome_snackbar_content: ^0.1.5
   web_socket_channel: ^3.0.3
-
+  image_picker: ^0.8.7+4
 
 
 

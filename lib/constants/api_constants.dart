@@ -18,7 +18,10 @@ class ApiConstants {
   static String get listNoSO => '$baseUrl/api/no-stock-opname';
   static String get masterCompany => '$baseUrl/api/master-company';
   static String get addNoSO => '$baseUrl/api/no-stock-opname/create';
+  static String get addStatusSO => '$baseUrl/api/status';
+  static String get listStatusSO => '$baseUrl/api/status';
   static String get deleteNoSO => '$baseUrl/api/no-stock-opname/delete';
+  static String get updateSO => '$baseUrl/api/update-stock-opname';
   static String scanAsset(String noSO) => '$baseUrl/api/no-stock-opname/$noSO';
   static String listAssets(String selectedNoSO) => '$baseUrl/api/no-stock-opname/$selectedNoSO';
   static String listAssetsBefore(String selectedNoSO) => '$baseUrl/api/no-stock-opname-current/$selectedNoSO';

@@ -8,6 +8,7 @@ import 'view_models/stock_opname_input_view_model.dart'; // Import StockOpnameIn
 import 'view_models/user_profile_view_model.dart'; // Import UserProfileViewModel
 import 'view_models/scan_processor_view_model.dart'; // Import UserProfileViewModel
 import 'view_models/master_data_view_model.dart'; // Import UserProfileViewModel
+import 'view_models/attachment_so_view_model.dart'; // Import UserProfileViewModel
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 
@@ -27,6 +28,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => UserProfileViewModel()), // Menambahkan UserProfileViewModel
         ChangeNotifierProvider(create: (_) => ScanProcessorViewModel()), // Menambahkan UserProfileViewModel
         ChangeNotifierProvider(create: (_) => MasterDataViewModel()),
+        ChangeNotifierProvider(create: (_) => AttachmentSOViewModel()),
+
 
 
       ],
