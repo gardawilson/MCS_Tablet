@@ -275,6 +275,33 @@ class StockOpnameInputViewModel extends ChangeNotifier {
     await fetchAssetsBefore(selectedNoSO, loadMore: true, companyFilters: companyFilters, categoryFilters: categoryFilters, locationFilters: locationFilters);
   }
 
+
+  //STATE UNTUK UPDATE DATA ASSETBEFORE
+  void updateAssetBefore(String assetCode, {
+    required int hasBeenPrinted,
+    required String assetImage,
+    required String username,
+    String? newStatus,
+  }) {
+    final index = assetListBefore.indexWhere((a) => a.assetCode == assetCode);
+    if (index != -1) {
+      final oldAsset = assetListBefore[index];
+      assetListBefore[index] = AssetBeforeModel(
+        assetCode: oldAsset.assetCode,
+        assetName: oldAsset.assetName,
+        hasNotBeenPrinted: hasBeenPrinted,
+        assetImage: assetImage,
+        username: username.toString().toUpperCase(),
+        statusSO: newStatus ?? oldAsset.statusSO,
+      );
+      notifyListeners(); // Trigger UI refresh
+      print('✅ Asset updated: $assetCode');
+    } else {
+      print('⚠️ Asset not found: $assetCode');
+    }
+  }
+
+
   @override
   void dispose() {
     _disconnectWebSocket();

@@ -81,8 +81,8 @@ class StockOpnameViewModel extends ChangeNotifier {
   }) async {
     _isLoading = true;
     notifyListeners();
+
     try {
-      // Ambil token dari SharedPreferences
       String? token = await _getToken();
       if (token == null) {
         _errorMessage = 'No token found';
@@ -91,7 +91,6 @@ class StockOpnameViewModel extends ChangeNotifier {
         return false;
       }
 
-      // Buat body JSON
       final body = {
         "Tanggal": tanggal,
         "IdCompanies": idCompanies,
@@ -99,9 +98,8 @@ class StockOpnameViewModel extends ChangeNotifier {
         "IdLocations": idLocations,
       };
 
-      // Lakukan POST request
       final response = await http.post(
-        Uri.parse(ApiConstants.addNoSO), // Ganti dengan endpoint API POST Anda
+        Uri.parse(ApiConstants.addNoSO),
         headers: {
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
@@ -110,11 +108,13 @@ class StockOpnameViewModel extends ChangeNotifier {
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
-        // Jika sukses
         _errorMessage = '';
+
+        // ✅ TAMBAHKAN INI: Fetch ulang data setelah submit berhasil
+        await fetchStockOpname();
+
         return true;
       } else {
-        // Jika terjadi error
         final responseBody = json.decode(response.body);
         _errorMessage = responseBody['message'] ?? 'Failed to submit stock opname';
         return false;

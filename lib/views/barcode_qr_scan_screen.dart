@@ -7,7 +7,6 @@ import 'package:provider/provider.dart';
 import '../view_models/stock_opname_input_view_model.dart';
 import '../view_models/scan_processor_view_model.dart';
 import 'package:flutter/foundation.dart';
-import '../widgets/not_found_dialog.dart'; // Import widget NotFoundDialog
 import 'package:vibration/vibration.dart';
 import 'package:audioplayers/audioplayers.dart';
 

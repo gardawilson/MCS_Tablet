@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../view_models/user_profile_view_model.dart';
 import '../widgets/user_profile_dialog.dart'; // Impor UserProfileDialog
 import '../widgets/status_so_dialog.dart'; // Impor UserProfileDialog
-// import 'mapping_lokasi_screen.dart'; // Impor MappingLokasiScreen
+
 
 class HomeScreen extends StatelessWidget {
   @override
@@ -76,7 +76,7 @@ class HomeScreen extends StatelessWidget {
                   title: 'Status',
                   icon: Icons.list_alt,
                   onTap: () {
-                    StatusSODialog.show(context);
+                    Navigator.pushNamed(context, '/status');
                   },
                 ),
                 const SizedBox(height: 24),

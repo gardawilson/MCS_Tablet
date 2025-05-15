@@ -3,7 +3,7 @@ class AssetBeforeModel {
   final String assetName;
   final int hasNotBeenPrinted;
   final String assetImage;
-  final int statusSO;
+  final String statusSO;
   final String username;
 
   AssetBeforeModel({
@@ -17,13 +17,13 @@ class AssetBeforeModel {
 
   factory AssetBeforeModel.fromJson(Map<String, dynamic> json) {
     return AssetBeforeModel(
-      assetCode: json['AssetCode'] ?? 'Unknown',  // Beri nilai default jika null
-      assetName: json['AssetName'] ?? 'Unknown',  // Beri nilai default jika null
+      assetCode: json['AssetCode'] ?? 'Unknown',
+      assetName: json['AssetName'] ?? 'Unknown',
       hasNotBeenPrinted: json['HasNotBeenPrinted'],
       assetImage: json['Image'] ?? 'Unknown',
-      statusSO: json['IdStatus'] ?? -1,
-      username: json['id_user'] ?? 'Unknown',
-
+      statusSO: json['status'] ?? 'Unknown',
+      username: (json['username'] ?? 'Unknown').toString().toUpperCase(),
     );
   }
+
 }

@@ -24,14 +24,13 @@ class LoginViewModel {
 
       if (response.statusCode == 200) {
         var data = jsonDecode(response.body);
-        print('Login success: ${data['message']}');
-
-        // Jika login berhasil, kita bisa mendapatkan token dari response
         String token = data['token'];
+        Map<String, dynamic> user = data['user'];
 
-        // Simpan token menggunakan SharedPreferences
         final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('token', token); // Simpan token di SharedPreferences
+        await prefs.setString('token', token);
+        await prefs.setString('username', user['username']);
+        await prefs.setInt('userId', user['id_user']); // Kalau perlu
 
         return true;
       } else {

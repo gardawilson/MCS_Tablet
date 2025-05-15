@@ -8,7 +8,7 @@ class DetailAssetDialog extends StatelessWidget {
   final String assetCode;
   final String assetName;
   final String assetImage;
-  final int statusSO;
+  final String statusSO;
   final String username;
 
   const DetailAssetDialog({
@@ -32,7 +32,7 @@ class DetailAssetDialog extends StatelessWidget {
             ),
             child: SizedBox(
               width: 700, // Fixed width
-              height: 400, // Fixed height
+              height: 385, // Fixed height
               child: Stack(
                 children: [
                   Padding(
@@ -57,11 +57,8 @@ class DetailAssetDialog extends StatelessWidget {
                             // Gambar di sebelah kiri
                             GestureDetector(
                               onTap: () {
-                                if (viewModel.imageBytes != null) {
-                                  _showZoomableImageDialog(
-                                    context,
-                                    viewModel.imageBytes!,
-                                  );
+                                if (viewModel.imageUrl != null) {
+                                  _showZoomableImageDialog(context, viewModel.imageUrl!);
                                 }
                               },
                               child: Container(
@@ -72,36 +69,39 @@ class DetailAssetDialog extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: ClipRRect(
-                                  borderRadius: BorderRadius.circular(8),
-                                  child: viewModel.isLoading
-                                      ? const Center(
-                                    child: CircularProgressIndicator(),
-                                  )
-                                      : viewModel.errorMessage != null
-                                      ? Center(
-                                    child: Text(
-                                      viewModel.errorMessage!,
-                                      style: const TextStyle(
-                                        color: Colors.red,
-                                        fontSize: 12,
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: viewModel.isLoading
+                                        ? const Center(
+                                      child: CircularProgressIndicator(),
+                                    )
+                                        : viewModel.errorMessage != null
+                                        ? Center(
+                                      child: Text(
+                                        viewModel.errorMessage!,
+                                        style: const TextStyle(
+                                          color: Colors.red,
+                                          fontSize: 12,
+                                        ),
+                                        textAlign: TextAlign.center,
                                       ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  )
-                                      : viewModel.imageBytes != null
-                                      ? Image.memory(
-                                    viewModel.imageBytes!,
-                                    fit: BoxFit.cover,
-                                  )
-                                      : const Center(
-                                    child: Text(
-                                      'No Image Available',
-                                      style: TextStyle(
-                                        color: Colors.grey,
-                                      ),
-                                      textAlign: TextAlign.center,
-                                    ),
-                                  ),
+                                    )
+                                        : Image.network(
+                                      viewModel.imageUrl!,
+                                      fit: BoxFit.cover,
+                                      loadingBuilder: (context, child, progress) {
+                                        if (progress == null) return child;
+                                        return const Center(child: CircularProgressIndicator());
+                                      },
+                                      errorBuilder: (context, error, stackTrace) {
+                                        debugPrint('Error loading image: $error');
+                                        return const Center(
+                                          child: Text(
+                                            'Failed to load image',
+                                            style: TextStyle(color: Colors.red),
+                                          ),
+                                        );
+                                      },
+                                    )
                                 ),
                               ),
                             ),
@@ -115,12 +115,42 @@ class DetailAssetDialog extends StatelessWidget {
                                   const SizedBox(height: 8),
                                   _buildDetailRow('Asset Name', assetName),
                                   const SizedBox(height: 8),
-                                  _buildDetailRow(
-                                      'Status', statusSO.toString()),
+                                  _buildDetailRow('Status', statusSO.toString()),
                                   const SizedBox(height: 8),
                                   _buildDetailRow('Submitted by', username),
+                                  const SizedBox(height: 140),
+                                  // Tombol Edit & Delete
+                                  Row(
+                                    mainAxisAlignment: MainAxisAlignment.end,
+                                    children: [
+                                      ElevatedButton.icon(
+                                        onPressed: () {
+                                          // TODO: aksi edit
+                                          debugPrint('Edit pressed');
+                                        },
+                                        icon: const Icon(Icons.edit, size: 18),
+                                        label: const Text('Edit'),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.blue,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      ElevatedButton.icon(
+                                        onPressed: () {
+                                          // TODO: aksi delete
+                                          debugPrint('Delete pressed');
+                                        },
+                                        icon: const Icon(Icons.delete, size: 18),
+                                        label: const Text('Delete'),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Colors.red,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                 ],
                               ),
+
                             ),
                           ],
                         ),
@@ -159,14 +189,14 @@ class DetailAssetDialog extends StatelessWidget {
           '$title: ',
           style: const TextStyle(
             fontSize: 16,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.w700,
           ),
         ),
         Flexible(
           child: Text(
             value,
             style: const TextStyle(
-              fontSize: 14,
+              fontSize: 16,
             ),
             overflow: TextOverflow.ellipsis, // Potong teks jika terlalu panjang
           ),
@@ -175,21 +205,15 @@ class DetailAssetDialog extends StatelessWidget {
     );
   }
 
-  void _showZoomableImageDialog(BuildContext context, Uint8List imageBytes) {
+  void _showZoomableImageDialog(BuildContext context, String imageUrl) {
     showDialog(
       context: context,
       builder: (_) => Dialog(
-        backgroundColor: Colors.transparent, // Membuat background dialog transparan
         child: InteractiveViewer(
-          boundaryMargin: const EdgeInsets.all(20),
-          minScale: 0.5,
-          maxScale: 4.0,
-          child: Image.memory(
-            imageBytes,
-            fit: BoxFit.contain,
-          ),
+          child: Image.network(imageUrl),
         ),
       ),
     );
   }
+
 }

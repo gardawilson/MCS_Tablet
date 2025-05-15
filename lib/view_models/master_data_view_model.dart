@@ -55,47 +55,47 @@ class MasterDataViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> fetchStatuses({bool notify = true}) async {
-    try {
-      if (notify) {
-        isLoading = true;
-        notifyListeners();
-      }
-
-      print('Fetching statuses from API: ${ApiConstants.listStatusSO}');
-
-      final response = await http.get(
-        Uri.parse(ApiConstants.listStatusSO),
-        headers: {'Content-Type': 'application/json'},
-      );
-
-      if (response.statusCode == 200) {
-        print('API Response (statusCode: ${response.statusCode}): ${response.body}');
-
-        final List<dynamic> jsonData = json.decode(response.body)['data'];
-        print('Decoded JSON Data: $jsonData'); // Log data mentah dari API
-
-        statuses = jsonData.map((e) {
-          final status = StatusSO.fromJson(e);
-          print('Parsed Status Item -> ID: ${status.id}, Status: ${status.status}');
-          return status;
-        }).toList();
-
-        print('Successfully fetched ${statuses.length} statuses.');
-        errorMessage = '';
-      } else {
-        errorMessage = 'Failed to load statuses (${response.statusCode})';
-        print(errorMessage);
-      }
-    } catch (e) {
-      errorMessage = 'Error: $e';
-      print(errorMessage);
-    } finally {
-      if (notify) {
-        isLoading = false;
-        notifyListeners();
-      }
-    }
-  }
+  // Future<void> fetchStatuses({bool notify = true}) async {
+  //   try {
+  //     if (notify) {
+  //       isLoading = true;
+  //       notifyListeners();
+  //     }
+  //
+  //     print('Fetching statuses from API: ${ApiConstants.listStatusSO}');
+  //
+  //     final response = await http.get(
+  //       Uri.parse(ApiConstants.listStatusSO),
+  //       headers: {'Content-Type': 'application/json'},
+  //     );
+  //
+  //     if (response.statusCode == 200) {
+  //       print('API Response (statusCode: ${response.statusCode}): ${response.body}');
+  //
+  //       final List<dynamic> jsonData = json.decode(response.body)['data'];
+  //       print('Decoded JSON Data: $jsonData'); // Log data mentah dari API
+  //
+  //       statuses = jsonData.map((e) {
+  //         final status = StatusSO.fromJson(e);
+  //         print('Parsed Status Item -> ID: ${status.id}, Status: ${status.status}');
+  //         return status;
+  //       }).toList();
+  //
+  //       print('Successfully fetched ${statuses.length} statuses.');
+  //       errorMessage = '';
+  //     } else {
+  //       errorMessage = 'Failed to load statuses (${response.statusCode})';
+  //       print(errorMessage);
+  //     }
+  //   } catch (e) {
+  //     errorMessage = 'Error: $e';
+  //     print(errorMessage);
+  //   } finally {
+  //     if (notify) {
+  //       isLoading = false;
+  //       notifyListeners();
+  //     }
+  //   }
+  // }
 
 }

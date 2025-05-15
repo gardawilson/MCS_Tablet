@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'views/login_screen.dart';
 import 'views/no_stock_opname_list_screen.dart'; // Import DashboardScreen
+import 'views/status_stock_opname_screen.dart'; // Import DashboardScreen
 import 'views/home_screen.dart';  // Pastikan path sesuai dengan file Anda
 import 'view_models/stock_opname_view_model.dart'; // Import StockOpnameViewModel
 import 'view_models/stock_opname_input_view_model.dart'; // Import StockOpnameInputViewModel
@@ -9,6 +10,8 @@ import 'view_models/user_profile_view_model.dart'; // Import UserProfileViewMode
 import 'view_models/scan_processor_view_model.dart'; // Import UserProfileViewModel
 import 'view_models/master_data_view_model.dart'; // Import UserProfileViewModel
 import 'view_models/attachment_so_view_model.dart'; // Import UserProfileViewModel
+import 'view_models/not_asset_list_view_model.dart'; // Import UserProfileViewModel
+import 'view_models/status_so_view_model.dart'; // Import UserProfileViewModel
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 
@@ -29,6 +32,8 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ScanProcessorViewModel()), // Menambahkan UserProfileViewModel
         ChangeNotifierProvider(create: (_) => MasterDataViewModel()),
         ChangeNotifierProvider(create: (_) => AttachmentSOViewModel()),
+        ChangeNotifierProvider(create: (_) => NoAssetViewModel()),
+        ChangeNotifierProvider(create: (_) => StatusSOViewModel()),
 
 
 
@@ -43,6 +48,7 @@ class MyApp extends StatelessWidget {
           '/': (context) => LoginScreen(),
           '/home': (context) => HomeScreen(),
           '/dashboard': (context) => StockOpnameListScreen(),
+          '/status': (context) => StatusStockOpnameListScreen(),
         },
       ),
     );

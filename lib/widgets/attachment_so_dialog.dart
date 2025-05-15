@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../view_models/attachment_so_view_model.dart';
-import '../view_models/master_data_view_model.dart';
+import '../view_models/status_so_view_model.dart';
+import '../view_models/stock_opname_input_view_model.dart';
 import '../models/status_so_model.dart';
 
 class AttachmentSODialog extends StatefulWidget {
@@ -16,21 +17,22 @@ class AttachmentSODialog extends StatefulWidget {
 
 class _AttachmentSODialogState extends State<AttachmentSODialog> {
   StatusSO? selectedStatus;
-  late MasterDataViewModel masterVM;
+  late StatusSOViewModel statusVM;
+
 
   @override
   void initState() {
     super.initState();
     Future.microtask(() {
-      masterVM = Provider.of<MasterDataViewModel>(context, listen: false);
-      masterVM.fetchStatuses();
+      statusVM = Provider.of<StatusSOViewModel>(context, listen: false);
+      statusVM.fetchStatuses();
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final viewModel = Provider.of<AttachmentSOViewModel>(context);
-    final masterData = Provider.of<MasterDataViewModel>(context);
+    final masterData = Provider.of<StatusSOViewModel>(context);
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
@@ -53,7 +55,7 @@ class _AttachmentSODialogState extends State<AttachmentSODialog> {
                         const Expanded(
                           child: Text(
                             'Attachment Details',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                           ),
                         ),
                         IconButton(
@@ -148,21 +150,36 @@ class _AttachmentSODialogState extends State<AttachmentSODialog> {
                           }
 
                           try {
-                            // Simpan gambar ke SMB folder dan dapatkan nama file
-                            final imageName = await viewModel.saveImageToSmbFolder(context);
-                            if (imageName == null) throw Exception("Failed to save image to SMB folder.");
+                            // Simpan gambar ke Backend dan dapatkan nama file
+                            final imageName = await viewModel.uploadImage();
+                            if (imageName == null) throw Exception("Failed to update!");
+
+                            final stockOpnameViewModel = Provider.of<StockOpnameInputViewModel>(context, listen: false);
 
                             // Kirim data attachment ke API
                             await viewModel.sendAttachment(
                               noSO: widget.noSO,
                               assetCode: widget.assetCode,
                               status: selectedStatus!.id.toString(),
+                              statusName: selectedStatus!.status.toString(),
                               imageName: imageName,
+                              stockOpnameViewModel: stockOpnameViewModel,
+
                             );
 
                             // Tampilkan pesan sukses dan tutup dialog
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Attachment submitted successfully!')),
+                              SnackBar(
+                                content: Row(
+                                  children: [
+                                    Icon(Icons.check_circle, color: Colors.white),
+                                    SizedBox(width: 10),
+                                    Text('Upload attachment berhasil!'),
+                                  ],
+                                ),
+                                backgroundColor: Colors.green,
+                                duration: Duration(seconds: 3),
+                              ),
                             );
                             Navigator.pop(context);
                           } catch (e) {
