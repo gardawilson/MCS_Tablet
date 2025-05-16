@@ -1,28 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../view_models/detail_asset_view_model.dart';
-import '../view_models/attachment_so_view_model.dart';
-import '../widgets/attachment_so_dialog.dart';
-import '../view_models/stock_opname_input_view_model.dart';
+import '../view_models/non_asset_list_view_model.dart';
+import '../widgets/add_non_asset_dialog.dart';
 import 'dart:typed_data';
 
 
-class DetailAssetDialog extends StatelessWidget {
-  final String assetCode;
-  final String assetName;
-  final String assetImage;
-  final String statusSO;
-  final String username;
+class DetailNonAssetDialog extends StatelessWidget {
+  final int idNonAsset;
   final String noSO;
+  final String nonAssetName;
+  final String assetImage;
+  final String remark;
+  final String username;
 
-  const DetailAssetDialog({
+  const DetailNonAssetDialog({
     Key? key,
-    required this.assetCode,
-    required this.assetName,
-    required this.assetImage,
-    required this.statusSO,
-    required this.username,
+    required this.idNonAsset,
     required this.noSO,
+    required this.nonAssetName,
+    required this.assetImage,
+    required this.remark,
+    required this.username,
   }) : super(key: key);
 
 
@@ -49,7 +48,7 @@ class DetailAssetDialog extends StatelessWidget {
                       children: [
                         // Header
                         const Text(
-                          'Asset Details',
+                          'Non Asset Details',
                           style: TextStyle(
                             fontSize: 20,
                             fontWeight: FontWeight.bold,
@@ -117,37 +116,43 @@ class DetailAssetDialog extends StatelessWidget {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  _buildDetailRow('Asset Code', assetCode),
+                                  _buildDetailRow('Asset Name', nonAssetName.toUpperCase()),
                                   const SizedBox(height: 8),
-                                  _buildDetailRow('Asset Name', assetName),
+                                  _buildDetailRow('Remark', remark.toUpperCase()),
                                   const SizedBox(height: 8),
-                                  _buildDetailRow('Status', statusSO.toString()),
-                                  const SizedBox(height: 8),
-                                  _buildDetailRow('Submitted by', username),
-                                  const SizedBox(height: 140),
+                                  // _buildDetailRow('Submitted by', username),
+                                  const SizedBox(height: 175),
                                   // Tombol Edit & Delete
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.end,
                                     children: [
                                       ElevatedButton.icon(
                                         onPressed: () {
-                                          Navigator.pop(context);
+                                          //Reset Image Sebelumnya
+                                          // Provider.of<NoAssetViewModel>(context, listen: false)
+                                          //     .clearSelectedImage();
 
                                           showDialog(
                                             context: context,
-                                            builder: (_) => ChangeNotifierProvider(
-                                              create: (_) => AttachmentSOViewModel(),
-                                              child: AttachmentSODialog(
-                                                assetCode: assetCode,
-                                                noSO: noSO,
-                                                initialImageUrl: viewModel.imageUrl,
-                                                initialStatus: statusSO,
-                                                isEdit: true,
-                                              ),
+                                            builder: (_) => AddNonAssetDialog(
+                                              idNonAsset: idNonAsset,
+                                              noSO: noSO,
+                                              initialImageUrl: viewModel.imageUrl,
+                                              initialNonAssetName: nonAssetName,
+                                              initialRemark: remark,
+                                              isEdit: true,
+                                              onSuccess: () {
+                                                // ✅ Trigger refresh list dari ViewModel
+                                                Provider.of<NoAssetViewModel>(context, listen: false)
+                                                    .fetchNoAssetItems(noSO);
+
+                                                // Jika ingin juga tutup DetailNonAssetDialog setelah update:
+                                                Navigator.pop(context);
+                                              },
                                             ),
                                           );
-
                                         },
+
                                         icon: const Icon(Icons.edit, size: 18),
                                         label: const Text('Edit'),
                                         style: ElevatedButton.styleFrom(
@@ -155,31 +160,61 @@ class DetailAssetDialog extends StatelessWidget {
                                         ),
                                       ),
 
+
                                       const SizedBox(width: 8),
-                                      ElevatedButton.icon(
-                                        onPressed: () async {
-                                          final attachmentViewModel = Provider.of<AttachmentSOViewModel>(context, listen: false);
-                                          final stockOpnameViewModel = Provider.of<StockOpnameInputViewModel>(context, listen: false);
+                                      StatefulBuilder(
+                                        builder: (context, setState) {
+                                          bool isDeleting = false;
 
+                                          return ElevatedButton.icon(
+                                            onPressed: isDeleting
+                                                ? null
+                                                : () async {
+                                              setState(() => isDeleting = true);
+                                              final noAssetViewModel = Provider.of<NoAssetViewModel>(context, listen: false);
 
-                                            await attachmentViewModel.sendAttachment(
-                                              noSO: noSO,
-                                              assetCode: assetCode,
-                                              isUpdateValid: false,
-                                              status: "",
-                                              statusName: "",
-                                              imageName: assetImage,
-                                              stockOpnameViewModel: stockOpnameViewModel,
-                                            );
+                                              try {
+                                                await noAssetViewModel.deleteSelectedItems([idNonAsset]);
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  const SnackBar(
+                                                    content: Row(
+                                                      children: [
+                                                        Icon(Icons.delete_forever, color: Colors.white),
+                                                        SizedBox(width: 10),
+                                                        Text('Asset Berhasil Dihapus!'),
+                                                      ],
+                                                    ),
+                                                    backgroundColor: Colors.red,
+                                                    duration: Duration(seconds: 3),
+                                                  ),
+                                                );
 
-                                            Navigator.pop(context); // Menutup dialog setelah selesai
-
+                                                noAssetViewModel.fetchNoAssetItems(noSO); // Refresh list
+                                                Navigator.pop(context); // Tutup dialog
+                                              } catch (e) {
+                                                ScaffoldMessenger.of(context).showSnackBar(
+                                                  SnackBar(content: Text('Failed to delete item: $e')),
+                                                );
+                                              } finally {
+                                                setState(() => isDeleting = false);
+                                              }
+                                            },
+                                            icon: isDeleting
+                                                ? const SizedBox(
+                                              width: 18,
+                                              height: 18,
+                                              child: CircularProgressIndicator(
+                                                strokeWidth: 2,
+                                                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                              ),
+                                            )
+                                                : const Icon(Icons.delete, size: 18),
+                                            label: Text(isDeleting ? 'Deleting...' : 'Delete'),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.red,
+                                            ),
+                                          );
                                         },
-                                        icon: const Icon(Icons.delete, size: 18),
-                                        label: const Text('Delete'),
-                                        style: ElevatedButton.styleFrom(
-                                          backgroundColor: Colors.red,
-                                        ),
                                       ),
 
                                     ],

@@ -1,110 +1,128 @@
-import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'dart:convert';
+import '../models/not_asset_model.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../constants/api_constants.dart';
-import '../view_models/stock_opname_input_view_model.dart';
+import 'dart:io';
 
 
-class AttachmentSOViewModel extends ChangeNotifier {
-  // Variabel untuk menyimpan gambar yang dipilih
-  File? _selectedImage;
-  File? get selectedImage => _selectedImage;
-
-  // Menambahkan state loading
+class NoAssetViewModel extends ChangeNotifier {
+  List<NoAssetItem> _items = [];
   bool _isLoading = false;
-  bool get isLoading => _isLoading;
+  File? _selectedImage;
 
   bool isImageChanged = false;
 
+  List<NoAssetItem> get items => _items;
+  bool get isLoading => _isLoading;
+  File? get selectedImage => _selectedImage;
 
-  // Fungsi untuk mengatur state loading
-  void setLoading(bool value) {
-    _isLoading = value;
-    notifyListeners();
-  }
-
-  // Fungsi untuk mengambil token dari SharedPreferences
   Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('token'); // Mengambil token yang disimpan
+    return prefs.getString('token');
   }
 
-  Future<String?> getUsername() async {
-    final prefs = await SharedPreferences.getInstance();
-    return prefs.getString('username');
-  }
-
-  // Fungsi untuk mengirim attachment (update SO)
-  Future<void> sendAttachment({
-    required String noSO,
-    required String assetCode,
-    required bool isUpdateValid,
-    required String status,
-    required String statusName,
-    required String imageName,
-    required StockOpnameInputViewModel stockOpnameViewModel, // Dikirim dari luar
-  }) async {
-    setLoading(true); // Tampilkan loading
+  Future<void> fetchNoAssetItems(String noso) async {
     try {
-      // Mendapatkan token dari SharedPreferences
-      String? token = await _getToken();
-      String? user = await getUsername();
+      _isLoading = true;
 
-      if (token == null) {
-        throw Exception("Token tidak ditemukan. Pastikan pengguna telah login.");
-      }
+      final url = Uri.parse(ApiConstants.listAdditionalAsset(noso));
+      final response = await http.get(url);
 
-      if (user == null) {
-        throw Exception("Username tidak ditemukan. Pastikan pengguna telah login.");
-      }
-
-      // URL endpoint API untuk update SO
-      final url = Uri.parse(ApiConstants.updateSO);
-
-      // Header untuk request
-      final headers = {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      };
-
-      // Body untuk request
-      final body = jsonEncode({
-        'noSO': noSO,
-        'assetCode': assetCode,
-        'isUpdateValid': isUpdateValid,
-        'image': imageName,
-        'idStatus': status,
-      });
-
-      // Mengirim request HTTP PUT untuk update SO
-      final response = await http.put(url, headers: headers, body: body);
-
-      // Cek status response
       if (response.statusCode == 200) {
-        // Update state di StockOpnameInputViewModel
-        stockOpnameViewModel.updateAssetBefore(
-          assetCode,
-          hasBeenPrinted: isUpdateValid ? 1 : 0,
-          newStatus: statusName, // atau bisa kamu mapping ke string lain
-          assetImage: imageName,
-          username: user,  // Hanya kirim jika user tidak null
-        );
-        print('✅ Attachment submitted successfully!');
+        final jsonData = json.decode(response.body);
+        final List<dynamic> data = jsonData['data'];
+        _items = data.map((item) => NoAssetItem.fromJson(item)).toList();
       } else {
-        print('❌ Failed to submit attachment. Status code: ${response.statusCode}');
-        print('📝 Response: ${response.body}');
-        throw Exception('Failed to submit attachment');
+        throw Exception('Failed to load data: ${response.statusCode}');
       }
-    } catch (e, stackTrace) {
-      print('🔥 Terjadi kesalahan saat mengirim attachment: $e');
-      print('📍 Stacktrace: $stackTrace');
+    } catch (e) {
+      debugPrint('Error fetching no asset items: $e');
+      rethrow;
     } finally {
-      setLoading(false); // Sembunyikan loading
+      _isLoading = false;
+      notifyListeners();
     }
   }
+
+
+  Future<bool> addNonAsset({  // <-- Ubah di sini
+    required String noSO,
+    required String imageName,
+    required String nonAssetName,
+    required String remark,
+  }) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      final token = await _getToken();
+      if (token == null) throw Exception("Token not found");
+
+      final response = await http.post(
+        Uri.parse('http://192.168.11.153:6000/api/no-asset-stock-opname/create'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          "NoSO": noSO,
+          "image": imageName,
+          "non_asset_name": nonAssetName,
+          "remark": remark,
+        }),
+      );
+
+      if (response.statusCode == 201) {
+        _selectedImage = null;
+        await fetchNoAssetItems(noSO);
+        return true;  // <-- Sekarang valid
+      } else {
+        throw Exception('Failed with status: ${response.statusCode}');
+      }
+    } catch (e) {
+      debugPrint('Error: $e');
+      return false;  // <-- Return false jika gagal
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+
+  Future<void> deleteSelectedItems(List<int> ids) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
+
+      final token = await _getToken();
+      if (token == null) throw Exception("Token not found");
+
+      final response = await http.post(
+        Uri.parse('http://192.168.11.153:6000/api/no-asset-stock-opname/DELETE'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          "idAssets": ids.map((id) => id.toString()).toList(),
+        }),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Failed to delete items: ${response.body}');
+      }
+    } catch (e) {
+      debugPrint('Error deleting selected items: $e');
+      rethrow;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
 
 
   // Fungsi untuk memilih gambar menggunakan kamera
@@ -227,5 +245,52 @@ class AttachmentSOViewModel extends ChangeNotifier {
   }
 
 
+  Future<bool> updateNonAsset({
+    required int idNonAsset,
+    required String image,
+    required String nonAssetName,
+    required String? remark,
+  }) async {
+    try {
+      _isLoading = true;
+      notifyListeners();
 
+      final token = await _getToken();
+      if (token == null) throw Exception("Token not found");
+
+      final response = await http.put(
+        Uri.parse('http://192.168.11.153:6000/api/no-asset-stock-opname/update/$idNonAsset'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          "image": image,
+          "non_asset_name": nonAssetName,
+          "remark": remark,
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        return true;
+      } else {
+        debugPrint('Update failed with status: ${response.statusCode}');
+        debugPrint('Response body: ${response.body}');
+        return false;
+      }
+    } catch (e) {
+      debugPrint('Error updating no asset item: $e');
+      return false;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+
+
+  void clearSelectedImage() {
+    _selectedImage = null;
+    notifyListeners();
+  }
 }

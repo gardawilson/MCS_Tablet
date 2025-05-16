@@ -8,21 +8,35 @@ import '../models/status_so_model.dart';
 class AttachmentSODialog extends StatefulWidget {
   final String assetCode;
   final String noSO;
+  final String? initialImageUrl;
+  final String? initialStatus; // String status
+  final bool isEdit;
 
-  const AttachmentSODialog({Key? key, required this.assetCode, required this.noSO}) : super(key: key);
+
+  const AttachmentSODialog({
+    Key? key,
+    required this.assetCode,
+    required this.noSO,
+    this.initialImageUrl,
+    this.initialStatus,
+    this.isEdit = false,  // default false (submit baru)
+  }) : super(key: key);
 
   @override
   State<AttachmentSODialog> createState() => _AttachmentSODialogState();
 }
 
 class _AttachmentSODialogState extends State<AttachmentSODialog> {
-  StatusSO? selectedStatus;
+  String? selectedStatus;
+  String? currentImageUrl;
   late StatusSOViewModel statusVM;
-
 
   @override
   void initState() {
     super.initState();
+    selectedStatus = widget.initialStatus;
+    currentImageUrl = widget.initialImageUrl;
+
     Future.microtask(() {
       statusVM = Provider.of<StatusSOViewModel>(context, listen: false);
       statusVM.fetchStatuses();
@@ -47,7 +61,6 @@ class _AttachmentSODialogState extends State<AttachmentSODialog> {
               padding: const EdgeInsets.all(16.0),
               child: SingleChildScrollView(
                 child: Column(
-                  mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Row(
@@ -64,12 +77,11 @@ class _AttachmentSODialogState extends State<AttachmentSODialog> {
                         )
                       ],
                     ),
-
                     Text(
                       'Asset Code: ${widget.assetCode}',
                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
                     ),
-
+                    const SizedBox(height: 12),
                     GestureDetector(
                       onTap: viewModel.pickImage,
                       child: Stack(
@@ -87,6 +99,14 @@ class _AttachmentSODialogState extends State<AttachmentSODialog> {
                               borderRadius: BorderRadius.circular(8),
                               child: Image.file(
                                 viewModel.selectedImage!,
+                                fit: BoxFit.contain,
+                              ),
+                            )
+                                : currentImageUrl != null
+                                ? ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.network(
+                                currentImageUrl!,
                                 fit: BoxFit.contain,
                               ),
                             )
@@ -111,12 +131,10 @@ class _AttachmentSODialogState extends State<AttachmentSODialog> {
                         ],
                       ),
                     ),
-
                     const SizedBox(height: 16),
-
                     masterData.isLoading
                         ? const Center(child: CircularProgressIndicator())
-                        : DropdownButtonFormField<StatusSO>(
+                        : DropdownButtonFormField<String>(
                       value: selectedStatus,
                       isExpanded: true,
                       decoration: const InputDecoration(
@@ -124,8 +142,8 @@ class _AttachmentSODialogState extends State<AttachmentSODialog> {
                         border: OutlineInputBorder(),
                       ),
                       items: masterData.statuses.map((status) {
-                        return DropdownMenuItem<StatusSO>(
-                          value: status,
+                        return DropdownMenuItem<String>(
+                          value: status.status,
                           child: Text(status.status),
                         );
                       }).toList(),
@@ -135,41 +153,66 @@ class _AttachmentSODialogState extends State<AttachmentSODialog> {
                         });
                       },
                     ),
-
                     const SizedBox(height: 24),
                     Align(
                       alignment: Alignment.centerRight,
                       child: ElevatedButton(
-                        onPressed: () async {
-                          // Validasi input
-                          if (viewModel.selectedImage == null || selectedStatus == null) {
+                        onPressed: viewModel.isLoading
+                            ? null // 🔒 Disable tombol saat loading
+                            : () async {
+                          if (viewModel.selectedImage == null && currentImageUrl == null) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Please select an image and status.')),
+                              const SnackBar(content: Text('Please select or capture an image.')),
+                            );
+                            return;
+                          }
+                          if (selectedStatus == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Please select a status.')),
                             );
                             return;
                           }
 
                           try {
-                            // Simpan gambar ke Backend dan dapatkan nama file
-                            final imageName = await viewModel.uploadImage();
-                            if (imageName == null) throw Exception("Failed to update!");
+                            viewModel.setLoading(true); // Aktifkan loading state
+
+                            String? imageName;
+
+                            if (widget.isEdit) {
+                              if (!viewModel.isImageChanged) {
+                                imageName = widget.initialImageUrl!.split('/').last;
+                              } else {
+                                imageName = await viewModel.replaceImage(oldImageName: widget.initialImageUrl!.split('/').last);
+                                if (imageName == null) throw Exception("Failed to upload image.");
+                              }
+                              viewModel.isImageChanged = false;
+                            } else {
+                              if (viewModel.selectedImage == null) {
+                                throw Exception("Please select or capture an image.");
+                              }
+                              imageName = await viewModel.uploadImage();
+                              if (imageName == null) throw Exception("Failed to upload image.");
+                            }
 
                             final stockOpnameViewModel = Provider.of<StockOpnameInputViewModel>(context, listen: false);
+                            final matchedStatus = masterData.statuses.firstWhere(
+                                  (s) => s.status == selectedStatus,
+                              orElse: () => StatusSO(id: 0, status: selectedStatus!),
+                            );
 
-                            // Kirim data attachment ke API
                             await viewModel.sendAttachment(
                               noSO: widget.noSO,
                               assetCode: widget.assetCode,
-                              status: selectedStatus!.id.toString(),
-                              statusName: selectedStatus!.status.toString(),
+                              status: matchedStatus.id.toString(),
+                              statusName: matchedStatus.status,
+                              isUpdateValid: true,
                               imageName: imageName,
                               stockOpnameViewModel: stockOpnameViewModel,
-
                             );
 
-                            // Tampilkan pesan sukses dan tutup dialog
+                            Navigator.pop(context); // Tutup dialog
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
+                              const SnackBar(
                                 content: Row(
                                   children: [
                                     Icon(Icons.check_circle, color: Colors.white),
@@ -181,31 +224,41 @@ class _AttachmentSODialogState extends State<AttachmentSODialog> {
                                 duration: Duration(seconds: 3),
                               ),
                             );
-                            Navigator.pop(context);
                           } catch (e) {
-                            // Tangani error dan tampilkan pesan kesalahan
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(content: Text('Error: $e')),
                             );
+                          } finally {
+                            viewModel.setLoading(false); // Nonaktifkan loading state
                           }
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF7a1b0c),
-                          minimumSize: Size(double.infinity, 48),  // Lebar penuh dan tinggi tombol
-                          padding: EdgeInsets.symmetric(vertical: 14),  // Padding vertikal yang lebih besar
+                          minimumSize: const Size(double.infinity, 48),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(8),  // Sudut tombol yang lebih membulat
+                            borderRadius: BorderRadius.circular(8),
                           ),
                         ),
-                        child: Text(
-                          'Submit',  // Teks tombol
+                        child: viewModel.isLoading
+                            ? const SizedBox(
+                          width: 20,
+                          height: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                            : const Text(
+                          'Submit',
                           style: TextStyle(
-                            fontSize: 16,  // Ukuran font
-                            fontWeight: FontWeight.bold,  // Menambah ketebalan teks
-                            color: Colors.white,  // Teks berwarna putih
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
                           ),
                         ),
                       ),
+
                     ),
                   ],
                 ),
@@ -213,13 +266,13 @@ class _AttachmentSODialogState extends State<AttachmentSODialog> {
             ),
           ),
         ),
-        if (viewModel.isLoading)
-          Container(
-            color: Colors.black.withOpacity(0.5), // Latar belakang semi-transparan
-            child: const Center(
-              child: CircularProgressIndicator(), // Indikator loading
-            ),
-          ),
+        // if (viewModel.isLoading)
+        //   Container(
+        //     color: Colors.black.withOpacity(0.5),
+        //     child: const Center(
+        //       child: CircularProgressIndicator(),
+        //     ),
+        //   ),
       ],
     );
   }

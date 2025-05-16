@@ -8,7 +8,7 @@ import '../widgets/loading_skeleton.dart';
 import '../widgets/attachment_so_dialog.dart';
 import '../widgets/detail_asset_dialog.dart';
 import '../views/barcode_qr_scan_screen.dart';
-import '../views/not_asset_list_screen.dart';
+import '../views/non_asset_list_screen.dart';
 import '../models/company_model.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 
@@ -205,6 +205,7 @@ class _StockOpnameInputScreenState extends State<StockOpnameInputScreen> {
                                       assetImage: asset.assetImage,
                                       statusSO: asset.statusSO,
                                       username: asset.username,
+                                      noSO: widget.noSO,
                                     ),
                                   );
                                 }
