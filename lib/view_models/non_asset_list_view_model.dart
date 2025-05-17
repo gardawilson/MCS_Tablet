@@ -9,13 +9,13 @@ import 'dart:io';
 
 
 class NoAssetViewModel extends ChangeNotifier {
-  List<NoAssetItem> _items = [];
+  List<NonAssetItem> _items = [];
   bool _isLoading = false;
   File? _selectedImage;
 
   bool isImageChanged = false;
 
-  List<NoAssetItem> get items => _items;
+  List<NonAssetItem> get items => _items;
   bool get isLoading => _isLoading;
   File? get selectedImage => _selectedImage;
 
@@ -24,17 +24,17 @@ class NoAssetViewModel extends ChangeNotifier {
     return prefs.getString('token');
   }
 
-  Future<void> fetchNoAssetItems(String noso) async {
+  Future<void> fetchNonAssetItems(String noso) async {
     try {
       _isLoading = true;
 
-      final url = Uri.parse(ApiConstants.listAdditionalAsset(noso));
+      final url = Uri.parse(ApiConstants.listNonAsset(noso));
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
         final jsonData = json.decode(response.body);
         final List<dynamic> data = jsonData['data'];
-        _items = data.map((item) => NoAssetItem.fromJson(item)).toList();
+        _items = data.map((item) => NonAssetItem.fromJson(item)).toList();
       } else {
         throw Exception('Failed to load data: ${response.statusCode}');
       }
@@ -51,6 +51,7 @@ class NoAssetViewModel extends ChangeNotifier {
   Future<bool> addNonAsset({  // <-- Ubah di sini
     required String noSO,
     required String imageName,
+    required String locationCode,
     required String nonAssetName,
     required String remark,
   }) async {
@@ -70,6 +71,7 @@ class NoAssetViewModel extends ChangeNotifier {
         body: jsonEncode({
           "NoSO": noSO,
           "image": imageName,
+          "location_code": locationCode,
           "non_asset_name": nonAssetName,
           "remark": remark,
         }),
@@ -77,7 +79,7 @@ class NoAssetViewModel extends ChangeNotifier {
 
       if (response.statusCode == 201) {
         _selectedImage = null;
-        await fetchNoAssetItems(noSO);
+        await fetchNonAssetItems(noSO);
         return true;  // <-- Sekarang valid
       } else {
         throw Exception('Failed with status: ${response.statusCode}');
@@ -141,7 +143,7 @@ class NoAssetViewModel extends ChangeNotifier {
   }
 
   // Fungsi untuk mengupload gambar ke server
-  Future<String?> uploadImage() async {
+  Future<String?> uploadImage(String noSO) async {
     if (_selectedImage == null) return null;
 
     try {
@@ -160,6 +162,9 @@ class NoAssetViewModel extends ChangeNotifier {
       // Tambahkan header Authorization ke request
       request.headers['Authorization'] = 'Bearer $token';
 
+      // Tambahkan nilai noSO ke dalam form-data
+      request.fields['noSO'] = noSO;
+
       // Tambahkan file gambar ke request
       request.files.add(
         http.MultipartFile(
@@ -170,14 +175,14 @@ class NoAssetViewModel extends ChangeNotifier {
         ),
       );
 
-      // Mengirim request upload gambar
+      // Kirim request upload gambar
       final response = await request.send();
 
       // Mengecek status code dari response
       if (response.statusCode == 200) {
         final responseData = await response.stream.bytesToString();
         final jsonResponse = json.decode(responseData);
-        return jsonResponse['fileName']; // Mengembalikan nama file yang diupload
+        return jsonResponse['fileName'];
       } else {
         debugPrint('❌ Gagal mengupload gambar. Status code: ${response.statusCode}');
         return null;
@@ -189,7 +194,10 @@ class NoAssetViewModel extends ChangeNotifier {
   }
 
 
-  Future<String?> replaceImage({required String oldImageName}) async {
+  Future<String?> replaceImage({
+    required String oldImageName,
+    required String noSO,
+  }) async {
     if (_selectedImage == null) {
       debugPrint('[replaceImage] Tidak ada gambar yang dipilih (_selectedImage == null).');
       return null;
@@ -207,12 +215,17 @@ class NoAssetViewModel extends ChangeNotifier {
       final uri = Uri.parse(ApiConstants.editAssetImg);
       debugPrint('[replaceImage] Endpoint URI: $uri');
       debugPrint('[replaceImage] Nama file lama: $oldImageName');
+      debugPrint('[replaceImage] noSO: $noSO');
       debugPrint('[replaceImage] Nama file baru: ${_selectedImage!.path.split('/').last}');
 
       final request = http.MultipartRequest('POST', uri);
       request.headers['Authorization'] = 'Bearer $token';
 
+      // Kirimkan oldImageName dan noSO sebagai fields
       request.fields['oldImageName'] = oldImageName;
+      request.fields['noSO'] = noSO;
+
+      // Tambahkan file gambar baru
       request.files.add(
         http.MultipartFile(
           'image',
@@ -245,9 +258,11 @@ class NoAssetViewModel extends ChangeNotifier {
   }
 
 
+
   Future<bool> updateNonAsset({
     required int idNonAsset,
     required String image,
+    required String locationCode,
     required String nonAssetName,
     required String? remark,
   }) async {
@@ -266,6 +281,7 @@ class NoAssetViewModel extends ChangeNotifier {
         },
         body: jsonEncode({
           "image": image,
+          "location_code": locationCode,
           "non_asset_name": nonAssetName,
           "remark": remark,
         }),

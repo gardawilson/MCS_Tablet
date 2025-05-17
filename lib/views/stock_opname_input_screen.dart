@@ -4,6 +4,7 @@ import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import '../view_models/stock_opname_input_view_model.dart';
 import '../view_models/master_data_view_model.dart';
 import '../view_models/attachment_so_view_model.dart';
+import '../view_models/laporan_so_pdf_view_model.dart';
 import '../widgets/loading_skeleton.dart';
 import '../widgets/attachment_so_dialog.dart';
 import '../widgets/detail_asset_dialog.dart';
@@ -13,12 +14,12 @@ import '../models/company_model.dart';
 import 'package:multi_select_flutter/multi_select_flutter.dart';
 
 
-
 class StockOpnameInputScreen extends StatefulWidget {
   final String noSO;
   final String tgl;
+  final List<String> company;
 
-  const StockOpnameInputScreen({Key? key, required this.noSO, required this.tgl}) : super(key: key);
+  const StockOpnameInputScreen({Key? key, required this.noSO, required this.tgl, required this.company}) : super(key: key);
 
   @override
   _StockOpnameInputScreenState createState() => _StockOpnameInputScreenState();
@@ -143,7 +144,7 @@ class _StockOpnameInputScreenState extends State<StockOpnameInputScreen> {
                             return Padding(
                               padding: EdgeInsets.all(8.0),
                               child: Text(
-                                '📋 Daftar Asset Kiri ($count)',
+                                '📋 Daftar Asset Before ($count)',
                                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                               ),
                             );
@@ -256,7 +257,7 @@ class _StockOpnameInputScreenState extends State<StockOpnameInputScreen> {
                             return Padding(
                               padding: EdgeInsets.all(8.0),
                               child: Text(
-                                '📋 Daftar Asset Kanan ($count)',
+                                '📋 Daftar Asset After ($count)',
                                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                               ),
                             );
@@ -330,6 +331,13 @@ class _StockOpnameInputScreenState extends State<StockOpnameInputScreen> {
             label: 'Input Manual',
             onTap: () {
               _showNoAssetList(context);
+            },
+          ),
+          SpeedDialChild(
+            child: const Icon(Icons.summarize_outlined),
+            label: 'Laporan',
+            onTap: () {
+              _showLaporanSOPdf(context);
             },
           ),
         ],
@@ -552,6 +560,15 @@ class _StockOpnameInputScreenState extends State<StockOpnameInputScreen> {
       ),
     );
   }
+
+  void _showLaporanSOPdf(BuildContext context) async {
+    final viewModel = context.read<ReportViewModel>();
+    await viewModel.downloadAndOpenPdf(widget.noSO);
+
+    // Tidak perlu navigation ke halaman baru
+    // Karena PDF akan terbuka di aplikasi terpisah
+  }
+
 
 
 }

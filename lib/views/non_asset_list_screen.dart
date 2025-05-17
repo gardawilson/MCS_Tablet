@@ -24,7 +24,7 @@ class _ItemNoAssetCodeState extends State<ItemNoAssetCode> {
   void initState() {
     super.initState();
     viewModel = Provider.of<NoAssetViewModel>(context, listen: false);
-    viewModel.fetchNoAssetItems(widget.noSO);
+    viewModel.fetchNonAssetItems(widget.noSO);
   }
 
   void toggleSelection(int id) {
@@ -49,7 +49,7 @@ class _ItemNoAssetCodeState extends State<ItemNoAssetCode> {
   void deleteSelectedItems() async {
     try {
       await viewModel.deleteSelectedItems(selectedIds.toList());
-      await viewModel.fetchNoAssetItems(widget.noSO);
+      await viewModel.fetchNonAssetItems(widget.noSO);
       clearSelection();
 
       if (context.mounted) {
@@ -139,7 +139,7 @@ class _ItemNoAssetCodeState extends State<ItemNoAssetCode> {
                   style: TextStyle(fontSize: 16, color: Colors.grey),
                 ),
                 TextButton(
-                  onPressed: () => vm.fetchNoAssetItems(widget.noSO),
+                  onPressed: () => vm.fetchNonAssetItems(widget.noSO),
                   child: const Text("Retry"),
                 ),
               ],
@@ -148,7 +148,7 @@ class _ItemNoAssetCodeState extends State<ItemNoAssetCode> {
         }
 
         return RefreshIndicator(
-          onRefresh: () => vm.fetchNoAssetItems(widget.noSO),
+          onRefresh: () => vm.fetchNonAssetItems(widget.noSO),
           color: const Color(0xFF7a1b0c),
           child: ListView.builder(
             padding: const EdgeInsets.symmetric(vertical: 8),
@@ -169,6 +169,7 @@ class _ItemNoAssetCodeState extends State<ItemNoAssetCode> {
                       noSO: widget.noSO,
                       nonAssetName: item.nonAssetName,
                       assetImage: item.image,
+                      nonAssetLocation: item.locationCode,
                       remark:  item.remark,
                       username: 'N/A',
                     ),
@@ -205,7 +206,7 @@ class _ItemNoAssetCodeState extends State<ItemNoAssetCode> {
         idNonAsset: 0,
         noSO: widget.noSO,
         onSuccess: () async {
-          await viewModel.fetchNoAssetItems(widget.noSO);
+          await viewModel.fetchNonAssetItems(widget.noSO);
           viewModel.isImageChanged = false;
 
           // if (context.mounted) {

@@ -131,6 +131,7 @@ class _AttachmentSODialogState extends State<AttachmentSODialog> {
                         ],
                       ),
                     ),
+
                     const SizedBox(height: 16),
                     masterData.isLoading
                         ? const Center(child: CircularProgressIndicator())
@@ -153,6 +154,7 @@ class _AttachmentSODialogState extends State<AttachmentSODialog> {
                         });
                       },
                     ),
+
                     const SizedBox(height: 24),
                     Align(
                       alignment: Alignment.centerRight,
@@ -182,7 +184,7 @@ class _AttachmentSODialogState extends State<AttachmentSODialog> {
                               if (!viewModel.isImageChanged) {
                                 imageName = widget.initialImageUrl!.split('/').last;
                               } else {
-                                imageName = await viewModel.replaceImage(oldImageName: widget.initialImageUrl!.split('/').last);
+                                imageName = await viewModel.replaceImage(oldImageName: widget.initialImageUrl!.split('/').last, noSO: widget.noSO);
                                 if (imageName == null) throw Exception("Failed to upload image.");
                               }
                               viewModel.isImageChanged = false;
@@ -190,7 +192,7 @@ class _AttachmentSODialogState extends State<AttachmentSODialog> {
                               if (viewModel.selectedImage == null) {
                                 throw Exception("Please select or capture an image.");
                               }
-                              imageName = await viewModel.uploadImage();
+                              imageName = await viewModel.uploadImage(widget.noSO);
                               if (imageName == null) throw Exception("Failed to upload image.");
                             }
 

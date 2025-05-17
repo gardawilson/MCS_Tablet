@@ -65,6 +65,7 @@ class _StockOpnameListScreenState extends State<StockOpnameListScreen> {
                     builder: (context) => StockOpnameInputScreen(
                       noSO: stockOpname.noSO,
                       tgl: stockOpname.tgl,
+                      company: stockOpname.companies,
                     ),
                   ),
                 );
@@ -143,6 +144,7 @@ class _StockOpnameListScreenState extends State<StockOpnameListScreen> {
                           builder: (context) => StockOpnameInputScreen(
                             noSO: stockOpname.noSO,
                             tgl: stockOpname.tgl,
+                            company: stockOpname.companies,
                           ),
                         ),
                       );

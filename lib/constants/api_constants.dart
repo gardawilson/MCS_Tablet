@@ -27,10 +27,11 @@ class ApiConstants {
   static String viewAssetImg(String imgName) => '$baseUrl/api/upload/$imgName';
   static String deleteStatusSO(int idstatus) => '$baseUrl/api/status/$idstatus';
   static String updateStatusSO(int idstatus) => '$baseUrl/api/status/$idstatus';
-  static String listAdditionalAsset(String noso) => '$baseUrl/api/no-asset-stock-opname/$noso';
+  static String listNonAsset(String noso) => '$baseUrl/api/no-asset-stock-opname/$noso';
   static String scanAsset(String noSO) => '$baseUrl/api/no-stock-opname/$noSO';
   static String listAssets(String selectedNoSO) => '$baseUrl/api/no-stock-opname/$selectedNoSO';
   static String listAssetsBefore(String selectedNoSO) => '$baseUrl/api/no-stock-opname-current/$selectedNoSO';
+  static String reportSO(String selectedNoSO) => '$baseUrl/api/report/$selectedNoSO/pdf';
 
   // WebSocket Endpoint (new)
   static String realtimeStockOpname(String noSO) {

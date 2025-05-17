@@ -12,7 +12,7 @@ import 'view_models/master_data_view_model.dart'; // Import UserProfileViewModel
 import 'view_models/attachment_so_view_model.dart'; // Import UserProfileViewModel
 import 'view_models/non_asset_list_view_model.dart'; // Import UserProfileViewModel
 import 'view_models/status_so_view_model.dart'; // Import UserProfileViewModel
-import 'view_models/detail_asset_view_model.dart'; // Import UserProfileViewModel
+import 'view_models/laporan_so_pdf_view_model.dart'; // Import UserProfileViewModel
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 
@@ -35,6 +35,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AttachmentSOViewModel()),
         ChangeNotifierProvider(create: (_) => NoAssetViewModel()),
         ChangeNotifierProvider(create: (_) => StatusSOViewModel()),
+        ChangeNotifierProvider(create: (_) => ReportViewModel()),
 
 
 

@@ -123,7 +123,7 @@ class AttachmentSOViewModel extends ChangeNotifier {
   }
 
   // Fungsi untuk mengupload gambar ke server
-  Future<String?> uploadImage() async {
+  Future<String?> uploadImage(String noSO) async {
     if (_selectedImage == null) return null;
 
     try {
@@ -142,6 +142,9 @@ class AttachmentSOViewModel extends ChangeNotifier {
       // Tambahkan header Authorization ke request
       request.headers['Authorization'] = 'Bearer $token';
 
+      // Tambahkan nilai noSO ke dalam form-data
+      request.fields['noSO'] = noSO;
+
       // Tambahkan file gambar ke request
       request.files.add(
         http.MultipartFile(
@@ -152,14 +155,14 @@ class AttachmentSOViewModel extends ChangeNotifier {
         ),
       );
 
-      // Mengirim request upload gambar
+      // Kirim request upload gambar
       final response = await request.send();
 
       // Mengecek status code dari response
       if (response.statusCode == 200) {
         final responseData = await response.stream.bytesToString();
         final jsonResponse = json.decode(responseData);
-        return jsonResponse['fileName']; // Mengembalikan nama file yang diupload
+        return jsonResponse['fileName'];
       } else {
         debugPrint('❌ Gagal mengupload gambar. Status code: ${response.statusCode}');
         return null;
@@ -171,7 +174,10 @@ class AttachmentSOViewModel extends ChangeNotifier {
   }
 
 
-  Future<String?> replaceImage({required String oldImageName}) async {
+  Future<String?> replaceImage({
+    required String oldImageName,
+    required String noSO,
+  }) async {
     if (_selectedImage == null) {
       debugPrint('[replaceImage] Tidak ada gambar yang dipilih (_selectedImage == null).');
       return null;
@@ -189,12 +195,17 @@ class AttachmentSOViewModel extends ChangeNotifier {
       final uri = Uri.parse(ApiConstants.editAssetImg);
       debugPrint('[replaceImage] Endpoint URI: $uri');
       debugPrint('[replaceImage] Nama file lama: $oldImageName');
+      debugPrint('[replaceImage] noSO: $noSO');
       debugPrint('[replaceImage] Nama file baru: ${_selectedImage!.path.split('/').last}');
 
       final request = http.MultipartRequest('POST', uri);
       request.headers['Authorization'] = 'Bearer $token';
 
+      // Kirimkan oldImageName dan noSO sebagai fields
       request.fields['oldImageName'] = oldImageName;
+      request.fields['noSO'] = noSO;
+
+      // Tambahkan file gambar baru
       request.files.add(
         http.MultipartFile(
           'image',
@@ -225,6 +236,7 @@ class AttachmentSOViewModel extends ChangeNotifier {
       return null;
     }
   }
+
 
 
 

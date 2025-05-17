@@ -221,10 +221,10 @@ packages:
     dependency: transitive
     description:
       name: device_info_plus
-      sha256: "306b78788d1bb569edb7c55d622953c2414ca12445b41c9117963e03afc5c513"
+      sha256: "77f757b789ff68e4eaf9c56d1752309bd9f7ad557cb105b938a7f8eb89e59110"
       url: "https://pub.dev"
     source: hosted
-    version: "11.3.3"
+    version: "9.1.2"
   device_info_plus_platform_interface:
     dependency: transitive
     description:
@@ -237,10 +237,10 @@ packages:
     dependency: "direct main"
     description:
       name: dropdown_search
-      sha256: "4908765800ae407420663f7acd1571203ca99dcf6e65a26a957ada2b19f33ed6"
+      sha256: c29b3e5147a82a06a4a08b3b574c51cb48cc17ad89893d53ee72a6f86643622e
       url: "https://pub.dev"
     source: hosted
-    version: "2.0.1"
+    version: "6.0.2"
   fake_async:
     dependency: transitive
     description:
@@ -339,6 +339,14 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.0"
+  flutter_pdfview:
+    dependency: "direct main"
+    description:
+      name: flutter_pdfview
+      sha256: "51413e36ab3f1a2fe0edf97ebfa770e20182ea4a066bc9f292920330d9245c9d"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.4.0+1"
   flutter_plugin_android_lifecycle:
     dependency: transitive
     description:
@@ -1166,10 +1174,10 @@ packages:
     dependency: transitive
     description:
       name: win32_registry
-      sha256: "6f1b564492d0147b330dd794fee8f512cec4977957f310f9951b5f9d83618dae"
+      sha256: "21ec76dfc731550fd3e2ce7a33a9ea90b828fdf19a5c3bcf556fa992cfa99852"
       url: "https://pub.dev"
     source: hosted
-    version: "2.1.0"
+    version: "1.1.5"
   xdg_directories:
     dependency: transitive
     description:

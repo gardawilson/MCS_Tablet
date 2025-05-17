@@ -11,6 +11,7 @@ class DetailNonAssetDialog extends StatelessWidget {
   final String noSO;
   final String nonAssetName;
   final String assetImage;
+  final String nonAssetLocation;
   final String remark;
   final String username;
 
@@ -20,6 +21,7 @@ class DetailNonAssetDialog extends StatelessWidget {
     required this.noSO,
     required this.nonAssetName,
     required this.assetImage,
+    required this.nonAssetLocation,
     required this.remark,
     required this.username,
   }) : super(key: key);
@@ -138,13 +140,14 @@ class DetailNonAssetDialog extends StatelessWidget {
                                               idNonAsset: idNonAsset,
                                               noSO: noSO,
                                               initialImageUrl: viewModel.imageUrl,
+                                              initialLocation: nonAssetLocation,
                                               initialNonAssetName: nonAssetName,
                                               initialRemark: remark,
                                               isEdit: true,
                                               onSuccess: () {
                                                 // ✅ Trigger refresh list dari ViewModel
                                                 Provider.of<NoAssetViewModel>(context, listen: false)
-                                                    .fetchNoAssetItems(noSO);
+                                                    .fetchNonAssetItems(noSO);
 
                                                 // Jika ingin juga tutup DetailNonAssetDialog setelah update:
                                                 Navigator.pop(context);
@@ -189,7 +192,7 @@ class DetailNonAssetDialog extends StatelessWidget {
                                                   ),
                                                 );
 
-                                                noAssetViewModel.fetchNoAssetItems(noSO); // Refresh list
+                                                noAssetViewModel.fetchNonAssetItems(noSO); // Refresh list
                                                 Navigator.pop(context); // Tutup dialog
                                               } catch (e) {
                                                 ScaffoldMessenger.of(context).showSnackBar(

@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../view_models/non_asset_list_view_model.dart';
+import '../view_models/master_data_view_model.dart';
+import '../models/location_model.dart';
+import 'package:dropdown_search/dropdown_search.dart';
+
 
 class AddNonAssetDialog extends StatefulWidget {
   final int idNonAsset;
   final String noSO;
   final String? initialImageUrl;
+  final String? initialLocation;
   final String? initialNonAssetName;
   final String? initialRemark;
   final bool isEdit;
@@ -16,6 +21,7 @@ class AddNonAssetDialog extends StatefulWidget {
     required this.idNonAsset,
     required this.noSO,
     this.initialImageUrl,
+    this.initialLocation,
     this.initialNonAssetName,
     this.initialRemark,
     this.isEdit = false,
@@ -30,6 +36,8 @@ class _AddNonAssetDialogState extends State<AddNonAssetDialog> {
   final TextEditingController _remarkController = TextEditingController();
   final TextEditingController _nonAssetNameController = TextEditingController();
   String? currentImageUrl;
+  Location? selectedLocation;
+
 
   @override
   void initState() {
@@ -37,7 +45,25 @@ class _AddNonAssetDialogState extends State<AddNonAssetDialog> {
     _remarkController.text = widget.initialRemark ?? '';
     _nonAssetNameController.text = widget.initialNonAssetName ?? '';
     currentImageUrl = widget.initialImageUrl;
+
+    // Ambil data lokasi dulu baru set selectedLocation
+    Future.microtask(() async {
+      final masterData = Provider.of<MasterDataViewModel>(context, listen: false);
+      if (masterData.locations.isEmpty) {
+        await masterData.fetchMasterData();
+      }
+
+      if (widget.initialLocation != null) {
+        setState(() {
+          selectedLocation = masterData.locations.firstWhere(
+                (loc) => loc.locationCode == widget.initialLocation,
+            orElse: () => masterData.locations.first, // default jika tidak ketemu
+          );
+        });
+      }
+    });
   }
+
 
   @override
   void dispose() {
@@ -48,6 +74,7 @@ class _AddNonAssetDialogState extends State<AddNonAssetDialog> {
   @override
   Widget build(BuildContext context) {
     final viewModel = Provider.of<NoAssetViewModel>(context);
+    final masterData = Provider.of<MasterDataViewModel>(context); // Tambahkan ini
     final screenWidth = MediaQuery.of(context).size.width;
     final screenHeight = MediaQuery.of(context).size.height;
 
@@ -124,6 +151,27 @@ class _AddNonAssetDialogState extends State<AddNonAssetDialog> {
                         ],
                       ),
                     ),
+
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<Location>(
+                      value: selectedLocation,
+                      decoration: const InputDecoration(
+                        labelText: 'Select Location',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: masterData.locations.map((location) {
+                        return DropdownMenuItem<Location>(
+                          value: location,
+                          child: Text(location.locationName), // pastikan field `name` tersedia di model
+                        );
+                      }).toList(),
+                      onChanged: (Location? newValue) {
+                        setState(() {
+                          selectedLocation = newValue;
+                        });
+                      },
+                    ),
+
                     const SizedBox(height: 16),
                     TextField(
                       controller: _nonAssetNameController,
@@ -157,6 +205,13 @@ class _AddNonAssetDialogState extends State<AddNonAssetDialog> {
                                 return;
                               }
 
+                              if (selectedLocation == null) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text('Please select a location.')),
+                                );
+                                return;
+                              }
+
                               // Validasi remark
                               if (_nonAssetNameController.text.trim().isEmpty) {
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -178,9 +233,7 @@ class _AddNonAssetDialogState extends State<AddNonAssetDialog> {
                               if (widget.isEdit) {
                                 // ======== MODE EDIT =========
                                 if (viewModel.isImageChanged) {
-                                  imageName = await viewModel.replaceImage(
-                                    oldImageName: currentImageUrl!.split('/').last,
-                                  ) ??
+                                  imageName = await viewModel.replaceImage(oldImageName: currentImageUrl!.split('/').last, noSO: widget.noSO) ??
                                       (throw Exception('Failed to upload image.'));
                                   viewModel.isImageChanged = false;
 
@@ -194,6 +247,7 @@ class _AddNonAssetDialogState extends State<AddNonAssetDialog> {
                                 final success = await viewModel.updateNonAsset(
                                   idNonAsset: widget.idNonAsset,
                                   image: imageName,
+                                  locationCode: selectedLocation!.locationCode,
                                   nonAssetName: _nonAssetNameController.text.trim(),
                                   remark: _remarkController.text.trim(),
                                 );
@@ -218,12 +272,13 @@ class _AddNonAssetDialogState extends State<AddNonAssetDialog> {
                                 }
                               } else {
                                 // ======== MODE TAMBAH BARU =========
-                                imageName = await viewModel.uploadImage() ??
+                                imageName = await viewModel.uploadImage(widget.noSO) ??
                                     (throw Exception('Failed to upload image.'));
 
                                 final success = await viewModel.addNonAsset(
                                   noSO: widget.noSO,
                                   imageName: imageName,
+                                  locationCode: selectedLocation!.locationCode,
                                   remark: _remarkController.text.trim(),
                                   nonAssetName: _nonAssetNameController.text.trim(),
                                 );
