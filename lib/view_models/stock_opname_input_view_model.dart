@@ -33,6 +33,7 @@ class StockOpnameInputViewModel extends ChangeNotifier {
   int totalAssetsBefore = 0; // total semua data dari backend
   List<AssetBeforeModel> assetListBefore = [];
 
+  bool isRealtimeUpdateInProgress = false;
 
   // Fungsi untuk mengambil token dari SharedPreferences
   Future<String?> _getToken() async {
@@ -67,26 +68,22 @@ class StockOpnameInputViewModel extends ChangeNotifier {
         final exists = assetListAfter.any((a) => a.assetCode == newAsset.assetCode);
 
         if (!exists) {
-          // Tambahkan ke awal list
+          isRealtimeUpdateInProgress = true; // ✅ Set flag
           assetListAfter.insert(0, newAsset);
           totalAssetsAfter += 1;
 
-          // Hapus asset dengan assetCode yang sama dari assetListBefore
           assetListBefore.removeWhere((a) => a.assetCode == newAsset.assetCode);
           totalAssetsBefore -= 1;
 
-          // Update pagination offset jika perlu
-          if (!isFetchingMoreAfter) {
-            currentOffsetAfter += 1;
-          }
-
-          if (!isFetchingMoreBefore) {
-            currentOffsetBefore -= 1;
-          }
-
           notifyListeners();
+
+          Future.delayed(Duration(milliseconds: 500), () {
+            isRealtimeUpdateInProgress = false; // 🔁 Reset flag setelah render
+          });
+
           print('🆕 Real-time update: ${newAsset.assetCode}');
         }
+
       }
     } catch (e) {
       print('❌ Error processing WS message: $e');

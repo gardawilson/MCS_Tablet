@@ -19,6 +19,7 @@ class _AddNosoDialogState extends State<AddNosoDialog> {
   final Set<String> _selectedCategories = {}; // Untuk menyimpan pilihan Categories
   final Set<String> _selectedLocations = {}; // Untuk menyimpan pilihan Locations
   String? tanggalError; // Variabel untuk menyimpan pesan error
+  bool _isBOM = false;
 
 
   @override
@@ -35,7 +36,7 @@ class _AddNosoDialogState extends State<AddNosoDialog> {
     final masterViewModel = Provider.of<MasterDataViewModel>(context, listen: true);
 
     return AlertDialog(
-      title: const Text("Input Stock Opname"),
+      title: const Text("Header Stock Opname"),
       content: SizedBox(
         width: 600, // Ukuran tetap untuk lebar dialog
         child: Column(
@@ -186,27 +187,30 @@ class _AddNosoDialogState extends State<AddNosoDialog> {
             const SizedBox(height: 10), // Jarak antara teks dan chip
 
             // Row untuk Pilihan Category
-            Expanded(
+            Flexible(  // <-- Ganti Expanded dengan Flexible
+              fit: FlexFit.loose,  // <-- Tambahkan ini untuk behavior yang lebih ringan
               child: masterViewModel.isLoading
                   ? Center(child: CircularProgressIndicator())
                   : masterViewModel.errorMessage.isNotEmpty
                   ? Center(child: Text('❌ ${masterViewModel.errorMessage}'))
                   : Column(
+                mainAxisSize: MainAxisSize.min,  // <-- Tetap penting
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Teks Location
                   const Text(
                     "Category",
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
-
-                  // MultiSelectDialogField untuk pemilihan Location
+                  const SizedBox(height: 8),  // Spasi antara teks dan dropdown
                   MultiSelectDialogField(
                     items: masterViewModel.categories
-                        .map((category) => MultiSelectItem(category.categoryCode, category.categoryName))
+                        .map((category) => MultiSelectItem(
+                        category.categoryCode, category.categoryName))
                         .toList(),
                     title: const Text("Pilih Category"),
-                    buttonText: const Text("Pilih Category"),
+                    buttonText: _selectedCategories.isEmpty
+                        ? const Text("Pilih Category")
+                        : Text("${_selectedCategories.length} Category Selected"),
                     initialValue: _selectedCategories.toList(),
                     searchable: false,
                     listType: MultiSelectListType.CHIP,
@@ -216,51 +220,54 @@ class _AddNosoDialogState extends State<AddNosoDialog> {
                         _selectedCategories.addAll(values.cast<String>());
                       });
                     },
-                    chipDisplay: MultiSelectChipDisplay(
-                      scroll: true, // Aktifkan scroll
-                      items: _selectedCategories
-                          .map((id) => MultiSelectItem(
-                        id,
-                        masterViewModel.categories
-                            .firstWhere((category) => category.categoryCode == id)
-                            .categoryName,
-                      ))
-                          .toList(),
-                      onTap: (value) {
-                        setState(() {
-                          _selectedCategories.remove(value);
-                        });
-                      },
+                    chipDisplay: MultiSelectChipDisplay.none(),
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Colors.grey,
+                        width: 1,
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.white.withOpacity(0.5),
                     ),
+                    buttonIcon: Icon(Icons.arrow_drop_down, color: Colors.black),
+                    selectedColor: Colors.green.shade100,
+                    selectedItemsTextStyle: TextStyle(color: Colors.green),
+                    cancelText: Text("Batal"),
+                    confirmText: Text("Pilih"),
                   ),
                 ],
               ),
             ),
 
+            const SizedBox(height: 24),
+
             // Row untuk Pilihan Location
-            Expanded(
+            Flexible(
+              fit: FlexFit.loose, // Menggunakan loose fit untuk menghindari ekspansi berlebihan
               child: masterViewModel.isLoading
                   ? Center(child: CircularProgressIndicator())
                   : masterViewModel.errorMessage.isNotEmpty
                   ? Center(child: Text('❌ ${masterViewModel.errorMessage}'))
                   : Column(
+                mainAxisSize: MainAxisSize.min, // Penting untuk menghindari margin bawah
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Teks Location
                   const Text(
                     "Location",
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
-
-                  // MultiSelectDialogField untuk pemilihan Location
+                  const SizedBox(height: 8), // Spasi antara teks dan dropdown
                   MultiSelectDialogField(
                     items: masterViewModel.locations
-                        .map((location) => MultiSelectItem(location.locationCode, location.locationName))
+                        .map((location) => MultiSelectItem(
+                        location.locationCode, location.locationName))
                         .toList(),
                     title: const Text("Pilih Location"),
-                    buttonText: const Text("Pilih Location"),
+                    buttonText: _selectedLocations.isEmpty
+                        ? const Text("Pilih Location")
+                        : Text("${_selectedLocations.length} Location Selected"),
                     initialValue: _selectedLocations.toList(),
-                    searchable: true, // Menambahkan fitur pencarian
+                    searchable: true,
                     listType: MultiSelectListType.CHIP,
                     onConfirm: (values) {
                       setState(() {
@@ -268,26 +275,53 @@ class _AddNosoDialogState extends State<AddNosoDialog> {
                         _selectedLocations.addAll(values.cast<String>());
                       });
                     },
-                    chipDisplay: MultiSelectChipDisplay(
-                      scroll: true, // Aktifkan scroll
-                      items: _selectedLocations
-                          .map((id) => MultiSelectItem(
-                        id,
-                        masterViewModel.locations
-                            .firstWhere((location) => location.locationCode == id)
-                            .locationName,
-                      ))
-                          .toList(),
-                      onTap: (value) {
-                        setState(() {
-                          _selectedLocations.remove(value);
-                        });
-                      },
+                    decoration: BoxDecoration(
+                      border: Border.all(
+                        color: Colors.grey,
+                        width: 1,
+                      ),
+                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.white.withOpacity(0.5),
                     ),
+                    buttonIcon: Icon(Icons.arrow_drop_down, color: Colors.black),
+                    chipDisplay: MultiSelectChipDisplay.none(),
+                    selectedColor: Colors.orange.shade100,
+                    selectedItemsTextStyle: TextStyle(color: Colors.orange),
+                    cancelText: Text("Batal"),
+                    confirmText: Text("Pilih"),
                   ),
                 ],
               ),
-            )
+            ),
+
+            const SizedBox(height: 10), // Jarak antara teks dan chip
+
+            Row(
+              children: [
+                Checkbox(
+                  value: _isBOM,
+                  onChanged: (bool? value) {
+                    setState(() {
+                      _isBOM = value ?? false;
+                    });
+                  },
+                ),
+                InkWell(
+                  onTap: () {
+                    setState(() {
+                      _isBOM = !_isBOM;
+                    });
+                  },
+                  child: const Padding(
+                    padding: EdgeInsets.all(4.0),
+                    child: Text(
+                      "BOM Only",
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ),
+                ),
+              ],
+            ),
 
           ],
         ),
@@ -301,8 +335,13 @@ class _AddNosoDialogState extends State<AddNosoDialog> {
           child: const Text("Cancel"),
         ),
         ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: const Color(0xFF7a1b0c),
+            foregroundColor: Colors.white,
+          ),
           onPressed: () async {
             final tglSO = tanggalTextController.text; // Nilai dari TextField
+            final isBOM = _isBOM;
 
             // Jika pengguna tidak memilih apa pun, gunakan semua data dari masterViewModel
             final selectedCompanies = _selectedCompanies.isEmpty
@@ -330,6 +369,7 @@ class _AddNosoDialogState extends State<AddNosoDialog> {
               idCompanies: selectedCompanies,
               idCategories: selectedCategories,
               idLocations: selectedLocations,
+              isBOM: isBOM,
             );
 
             if (success) {

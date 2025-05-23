@@ -10,7 +10,6 @@ class StatusStockOpnameListScreen extends StatefulWidget {
 }
 
 class _StatusStockOpnameListScreenState extends State<StatusStockOpnameListScreen> {
-  List<String> selectedItems = [];
 
   @override
   void initState() {
@@ -26,19 +25,17 @@ class _StatusStockOpnameListScreenState extends State<StatusStockOpnameListScree
 
     return Scaffold(
       backgroundColor: Colors.grey.shade100,
-      appBar: selectedItems.isNotEmpty
-          ? AppBar(title: Text('${selectedItems.length} Dipilih'))
-          : AppBar(
+      appBar: AppBar(
         title: const Text('Status Stock Opname'),
         backgroundColor: const Color(0xFF7a1b0c),
+        foregroundColor: Colors.white,
       ),
-      floatingActionButton: selectedItems.isNotEmpty
-          ? null
-          : FloatingActionButton(
+      floatingActionButton: FloatingActionButton(
         onPressed: () {
           StatusSODialog.show(context);
         },
         backgroundColor: const Color(0xFF7a1b0c),
+        foregroundColor: Colors.white,
         child: const Icon(Icons.add),
       ),
       body: statusVM.isLoading
@@ -78,7 +75,7 @@ class _StatusStockOpnameListScreenState extends State<StatusStockOpnameListScree
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
-                    icon: Icon(Icons.edit, color: Colors.blue),
+                    icon: Icon(Icons.edit),
                     onPressed: () async {
                       final newStatus = await StatusEditDialog.show(context, status.status);
                       if (newStatus != null && newStatus.isNotEmpty && newStatus != status.status) {
@@ -89,7 +86,7 @@ class _StatusStockOpnameListScreenState extends State<StatusStockOpnameListScree
                   ),
 
                   IconButton(
-                    icon: Icon(Icons.delete, color: Colors.red),
+                    icon: Icon(Icons.delete),
                     onPressed: () async {
                       final confirm = await showDialog(
                         context: context,

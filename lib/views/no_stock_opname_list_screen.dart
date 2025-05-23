@@ -83,6 +83,7 @@ class _StockOpnameListScreenState extends State<StockOpnameListScreen> {
           : AppBar(
         title: const Text('Stock Opname List'),
         backgroundColor: const Color(0xFF7a1b0c),
+        foregroundColor: Colors.white,
       ),
       body: Consumer<StockOpnameViewModel>(
         builder: (context, viewModel, child) {
@@ -174,6 +175,10 @@ class _StockOpnameListScreenState extends State<StockOpnameListScreen> {
                                   color: Color(0xFF1a1a1a),
                                 ),
                               ),
+                              if (stockOpname.isBOM == 1) ...[
+                                const SizedBox(width: 6),
+                                const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 18),
+                              ],
                               // Tanggal
                               Text(
                                 stockOpname.tgl,
@@ -263,6 +268,7 @@ class _StockOpnameListScreenState extends State<StockOpnameListScreen> {
           );
         },
         backgroundColor: const Color(0xFF7a1b0c),
+        foregroundColor: Colors.white,
         child: const Icon(Icons.add),
       ),
     );

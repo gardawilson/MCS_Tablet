@@ -15,18 +15,23 @@ class ReportViewModel with ChangeNotifier {
   String? get pdfPath => _pdfPath;
   String? get error => _error;
 
-  Future<void> downloadAndOpenPdf(String noSO) async {
+  Future<void> downloadAndOpenPdf(String noSO, String tanggal, String company) async {
     try {
       _isLoading = true;
       _error = null;
       notifyListeners();
 
-      final url = Uri.parse(ApiConstants.reportSO(noSO));
+      final url = Uri.parse(
+        '${ApiConstants.reportSO(noSO)}?tanggal=$tanggal&perusahaan=$company',
+      );
+
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
         final dir = await getTemporaryDirectory();
-        final file = File('${dir.path}/Laporan_$noSO.pdf');
+
+        String formattedNoSO = noSO.replaceAll('.', '_'); // Hasil: SO_00000001
+        final file = File('${dir.path}/Laporan_$formattedNoSO.pdf');
 
         await file.writeAsBytes(response.bodyBytes);
 

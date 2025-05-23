@@ -46,6 +46,10 @@ class StatusSODialog {
                       ),
                       SizedBox(width: 8),
                       ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF7a1b0c),
+                          foregroundColor: Colors.white,
+                        ),
                         onPressed: () async {
                           String inputText = textController.text.trim();
 

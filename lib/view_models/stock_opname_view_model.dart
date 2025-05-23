@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/stock_opname_model.dart';
-import '../models/next_noso_model.dart';
 import '../constants/api_constants.dart';
 
 
@@ -78,6 +77,7 @@ class StockOpnameViewModel extends ChangeNotifier {
     required List<String> idCompanies,
     required List<String> idCategories,
     required List<String> idLocations,
+    required bool isBOM,
   }) async {
     _isLoading = true;
     notifyListeners();
@@ -96,6 +96,7 @@ class StockOpnameViewModel extends ChangeNotifier {
         "IdCompanies": idCompanies,
         "IdCategories": idCategories,
         "IdLocations": idLocations,
+        "IsBOM": isBOM,
       };
 
       final response = await http.post(

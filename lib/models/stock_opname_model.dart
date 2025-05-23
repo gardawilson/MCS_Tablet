@@ -1,6 +1,7 @@
 class StockOpname {
   final String noSO;
   final String tgl;
+  final int isBOM;
   final List<String> companies;
   final List<String> categories;
   final List<String> locations;
@@ -8,6 +9,7 @@ class StockOpname {
   StockOpname({
     required this.noSO,
     required this.tgl,
+    required this.isBOM,
     required this.companies,
     required this.categories,
     required this.locations,
@@ -17,6 +19,7 @@ class StockOpname {
     return StockOpname(
       noSO: json['NoSO'] ?? 'N/A', // Default 'N/A' jika NoSO tidak ada
       tgl: json['Tanggal'] ?? 'N/A', // Default 'N/A' jika Tanggal tidak ada
+      isBOM: json['IsBOM'],
       companies: json['companies'] != null && (json['companies'] as List).isNotEmpty
           ? List<String>.from(json['companies'])
           : ['N/A'], // Default ['N/A'] jika companies kosong atau tidak ada

@@ -6,6 +6,7 @@ import '../view_models/master_data_view_model.dart';
 import '../view_models/attachment_so_view_model.dart';
 import '../view_models/laporan_so_pdf_view_model.dart';
 import '../widgets/loading_skeleton.dart';
+import '../widgets/filter_modal.dart';
 import '../widgets/attachment_so_dialog.dart';
 import '../widgets/detail_asset_dialog.dart';
 import '../views/barcode_qr_scan_screen.dart';
@@ -33,10 +34,14 @@ class _StockOpnameInputScreenState extends State<StockOpnameInputScreen> {
   final ScrollController _scrollControllerBefore = ScrollController();
   final ScrollController _scrollControllerAfter = ScrollController();
 
+  late MasterDataViewModel masterDataVM;
+
+
   @override
   void initState() {
     super.initState();
     final viewModel = Provider.of<StockOpnameInputViewModel>(context, listen: false);
+    masterDataVM = Provider.of<MasterDataViewModel>(context, listen: false);
 
     // Memanggil kedua fungsi secara paralel menggunakan Future.wait
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -62,6 +67,9 @@ class _StockOpnameInputScreenState extends State<StockOpnameInputScreen> {
   void dispose() {
     _scrollControllerBefore.dispose();
     _scrollControllerAfter.dispose();
+
+    masterDataVM.clearFilters();
+
     super.dispose();
   }
 
@@ -73,8 +81,8 @@ class _StockOpnameInputScreenState extends State<StockOpnameInputScreen> {
           '${widget.tgl} ( ${widget.noSO} )',
           style: const TextStyle(color: Colors.white),
         ),
-        automaticallyImplyLeading: false,
         backgroundColor: const Color(0xFF7a1b0c),
+        foregroundColor: Colors.white,
         // actions: [
         //   IconButton(
         //     icon: const Icon(Icons.filter_list, color: Colors.white),
@@ -93,7 +101,7 @@ class _StockOpnameInputScreenState extends State<StockOpnameInputScreen> {
                 children: [
                   // Filter Button
                   ElevatedButton.icon(
-                    onPressed: () => _showFilterModal(context), // Memanggil modal saat tombol ditekan
+                    onPressed: () => _showFilterModal(context, widget.noSO), // Memanggil modal saat tombol ditekan
                     icon: Icon(Icons.filter_list, color: Colors.black, size: 24),
                     label: Text(
                       'Filters',
@@ -127,6 +135,7 @@ class _StockOpnameInputScreenState extends State<StockOpnameInputScreen> {
                             ),
                           );
                         }
+
                         return Center(
                           child: Text(
                             viewModel.errorMessageBefore,
@@ -135,85 +144,85 @@ class _StockOpnameInputScreenState extends State<StockOpnameInputScreen> {
                         );
                       }
 
-                      return ListView.builder(
-                        controller: _scrollControllerBefore,
-                        itemCount: viewModel.assetListBefore.length + (viewModel.hasMoreBefore ? 2 : 1),
-                        itemBuilder: (context, index) {
-                          final count = Provider.of<StockOpnameInputViewModel>(context).totalAssetsBefore;
-                          if (index == 0) {
-                            return Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: Text(
-                                '📋 Daftar Asset Before ($count)',
-                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                              ),
-                            );
-                          }
+                      return Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text(
+                              '📋 Daftar Asset Before (${viewModel.totalAssetsBefore})',
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          Expanded(
+                            child: ListView.builder(
+                              controller: _scrollControllerBefore,
+                              itemCount: viewModel.assetListBefore.length + (viewModel.hasMoreBefore ? 1 : 0),
+                              itemBuilder: (context, index) {
+                                if (index == viewModel.assetListBefore.length) {
+                                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                                    viewModel.loadMoreAssetsBefore(
+                                      widget.noSO,
+                                      companyFilters: _selectedCompanies.toList(),
+                                      categoryFilters: _selectedCategories.toList(),
+                                      locationFilters: _selectedLocations.toList(),
+                                    );
+                                  });
 
-                          if (index == viewModel.assetListBefore.length + 1) {
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              viewModel.loadMoreAssetsBefore(
-                                widget.noSO,
-                                companyFilters: _selectedCompanies.toList(),
-                                categoryFilters: _selectedCategories.toList(),
-                                locationFilters: _selectedLocations.toList(),
-                              );
-                            });
-
-                            return const Center(
-                              child: Padding(
-                                padding: EdgeInsets.symmetric(vertical: 16),
-                                child: CircularProgressIndicator(),
-                              ),
-                            );
-                          }
-
-                          final asset = viewModel.assetListBefore[index - 1];
-                          return Card(
-                            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                            child: ListTile(
-                              title: Text(
-                                asset.assetName,
-                                style: const TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                              subtitle: Text(asset.assetCode),
-                              leading: const Icon(Icons.inventory, color: Colors.blue),
-                              trailing: asset.hasNotBeenPrinted == 1
-                                  ? const Icon(Icons.check_circle, color: Colors.green)
-                                  : const SizedBox(),
-                              onTap: () {
-                                if (asset.hasNotBeenPrinted == 0) {
-                                  showDialog(
-                                    context: context,
-                                    builder: (context) => MultiProvider(
-                                      providers: [
-                                        ChangeNotifierProvider(create: (_) => AttachmentSOViewModel()),
-                                        ChangeNotifierProvider(create: (_) => MasterDataViewModel()),
-                                      ],
-                                      child: AttachmentSODialog(
-                                        assetCode: asset.assetCode,
-                                        noSO: widget.noSO, // Kirim assetCode dan noSO ke dialog
-                                      ),
-                                    ),
-                                  );
-                                } else {
-                                  // Tampilkan dialog khusus jika hasNotBeenPrinted != 1
-                                  showDialog(
-                                    context: context,
-                                    builder: (context) => DetailAssetDialog(
-                                      assetCode: asset.assetCode,
-                                      assetName: asset.assetName,
-                                      assetImage: asset.assetImage,
-                                      statusSO: asset.statusSO,
-                                      username: asset.username,
-                                      noSO: widget.noSO,
+                                  return const Center(
+                                    child: Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 16),
+                                      child: CircularProgressIndicator(),
                                     ),
                                   );
                                 }
+
+                                final asset = viewModel.assetListBefore[index];
+                                return Card(
+                                  margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                  child: ListTile(
+                                    title: Text(
+                                      asset.assetName,
+                                      style: const TextStyle(fontWeight: FontWeight.bold),
+                                    ),
+                                    subtitle: Text(asset.assetCode),
+                                    leading: const Icon(Icons.inventory, color: Colors.blue),
+                                    trailing: asset.hasNotBeenPrinted == 1
+                                        ? const Icon(Icons.check_circle, color: Colors.green)
+                                        : const SizedBox(),
+                                    onTap: () {
+                                      if (asset.hasNotBeenPrinted == 0) {
+                                        showDialog(
+                                          context: context,
+                                          builder: (context) => MultiProvider(
+                                            providers: [
+                                              ChangeNotifierProvider(create: (_) => AttachmentSOViewModel())
+                                            ],
+                                            child: AttachmentSODialog(
+                                              assetCode: asset.assetCode,
+                                              noSO: widget.noSO,
+                                            ),
+                                          ),
+                                        );
+                                      } else {
+                                        showDialog(
+                                          context: context,
+                                          builder: (context) => DetailAssetDialog(
+                                            assetCode: asset.assetCode,
+                                            assetName: asset.assetName,
+                                            assetImage: asset.assetImage,
+                                            statusSO: asset.statusSO,
+                                            username: asset.username,
+                                            noSO: widget.noSO,
+                                          ),
+                                        );
+                                      }
+                                    },
+                                  ),
+                                );
                               },
                             ),
-                          );
-                        },
+                          ),
+                        ],
                       );
                     },
                   ),
@@ -248,66 +257,80 @@ class _StockOpnameInputScreenState extends State<StockOpnameInputScreen> {
                         );
                       }
 
-                      return ListView.builder(
-                        controller: _scrollControllerAfter,
-                        itemCount: viewModel.assetListAfter.length + (viewModel.hasMoreAfter ? 2 : 1),
-                        itemBuilder: (context, index) {
-                          final count = Provider.of<StockOpnameInputViewModel>(context).totalAssetsAfter;
-                          if (index == 0) {
-                            return Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: Text(
-                                '📋 Daftar Asset After ($count)',
-                                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                              ),
-                            );
-                          }
-
-                          if (index == viewModel.assetListAfter.length + 1) {
-                            WidgetsBinding.instance.addPostFrameCallback((_) {
-                              viewModel.loadMoreAssetsAfter(
-                                widget.noSO,
-                                companyFilters: _selectedCompanies.toList(),
-                                categoryFilters: _selectedCategories.toList(),
-                                locationFilters: _selectedLocations.toList(),
-                              );
-                            });
-
-                            return const Center(
-                              child: Padding(
-                                padding: EdgeInsets.symmetric(vertical: 16),
-                                child: CircularProgressIndicator(),
-                              ),
-                            );
-                          }
-
-                          final asset = viewModel.assetListAfter[index - 1];
-                          return Card(
-                            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                            child: ListTile(
-                              title: Text(
-                                asset.assetName,
-                                style: const TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                              subtitle: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start, // Agar teks rata kiri
-                                children: [
-                                  Text(asset.assetCode),
-                                  Text('Scanned By: ${asset.username}'),
-                                ],
-                              ),
-                              leading: const Icon(Icons.inventory, color: Colors.blue),
+                      return Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Text(
+                              '📋 Daftar Asset After (${viewModel.totalAssetsAfter})',
+                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                             ),
-                          );
-                        },
+                          ),
+                          Expanded(
+                            child: ListView.builder(
+                              controller: _scrollControllerAfter,
+                              itemCount: viewModel.assetListAfter.length + (viewModel.hasMoreAfter ? 1 : 0),
+                              itemBuilder: (context, index) {
+                                // Jika ini index terakhir dan ada data lagi untuk di-load (loading indicator)
+                                if (index == viewModel.assetListAfter.length &&
+                                    viewModel.assetListAfter.isNotEmpty &&
+                                    !viewModel.isRealtimeUpdateInProgress) {
+
+                                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                                    viewModel.loadMoreAssetsAfter(
+                                      widget.noSO,
+                                      companyFilters: _selectedCompanies.toList(),
+                                      categoryFilters: _selectedCategories.toList(),
+                                      locationFilters: _selectedLocations.toList(),
+                                    );
+                                  });
+
+                                  return const Center(
+                                    child: Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 16),
+                                      child: CircularProgressIndicator(),
+                                    ),
+                                  );
+                                }
+
+                                // **Pastikan index masih valid sebelum akses list**
+                                if (index < viewModel.assetListAfter.length) {
+                                  final asset = viewModel.assetListAfter[index];
+                                  return Card(
+                                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                                    child: ListTile(
+                                      title: Text(
+                                        asset.assetName,
+                                        style: const TextStyle(fontWeight: FontWeight.bold),
+                                      ),
+                                      subtitle: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(asset.assetCode),
+                                          Text('Scanned By: ${asset.username}'),
+                                        ],
+                                      ),
+                                      leading: const Icon(Icons.inventory, color: Colors.blue),
+                                    ),
+                                  );
+                                }
+
+                                // Fallback jika terjadi kasus tak terduga (misal index di luar batas)
+                                return const SizedBox.shrink();
+                              },
+                            ),
+                          ),
+                        ],
                       );
                     },
                   ),
                 ),
+
+
+
               ],
             ),
           ),
-
         ],
       ),
 
@@ -345,181 +368,27 @@ class _StockOpnameInputScreenState extends State<StockOpnameInputScreen> {
     );
   }
 
-  void _showFilterModal(BuildContext context) {
-    final masterViewModel = Provider.of<MasterDataViewModel>(context, listen: false);
-    masterViewModel.fetchMasterData(); // Ganti dari fetchCompanies()
+  void _showFilterModal(BuildContext context, String noSO) {
+    final masterVM = Provider.of<MasterDataViewModel>(context, listen: false);
 
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      builder: (BuildContext context) {
-        return StatefulBuilder(
-          builder: (context, setModalState) {
-            return Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Consumer<MasterDataViewModel>(
-                builder: (context, vm, _) {
-                  if (vm.isLoading) {
-                    return Center(child: CircularProgressIndicator());
-                  }
-
-                  if (vm.errorMessage.isNotEmpty) {
-                    return Center(child: Text('❌ ${vm.errorMessage}'));
-                  }
-
-                  return Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Company',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 8.0,
-                        runSpacing: 8.0,
-                        children: vm.companies.map((company) {
-                          final isSelected = _selectedCompanies.contains(company.companyId);
-                          return ChoiceChip(
-                            label: Text(company.companyName),
-                            selected: isSelected,
-                            selectedColor: Colors.blue.shade100,
-                            labelStyle: TextStyle(
-                              color: isSelected ? Colors.blue : Colors.black,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                            ),
-                            onSelected: (selected) {
-                              setModalState(() {
-                                if (selected) {
-                                  _selectedCompanies.add(company.companyId);
-                                } else {
-                                  _selectedCompanies.remove(company.companyId);
-                                }
-                              });
-                            },
-                          );
-                        }).toList(),
-                      ),
-                      SizedBox(height: 24),
-                      Text(
-                        'Category',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(height: 12),
-                      Wrap(
-                        spacing: 8.0,
-                        runSpacing: 8.0,
-                        children: vm.categories.map((category) {
-                          final isSelected = _selectedCategories.contains(category.categoryCode);
-                          return ChoiceChip(
-                            label: Text(category.categoryName),
-                            selected: isSelected,
-                            selectedColor: Colors.green.shade100,
-                            labelStyle: TextStyle(
-                              color: isSelected ? Colors.green : Colors.black,
-                              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                            ),
-                            onSelected: (selected) {
-                              setModalState(() {
-                                if (selected) {
-                                  _selectedCategories.add(category.categoryCode);
-                                } else {
-                                  _selectedCategories.remove(category.categoryCode);
-                                }
-                              });
-                            },
-                          );
-                        }).toList(),
-                      ),
-                      SizedBox(height: 24),
-                      // Location Section - Scrollable & Responsive
-                      Text(
-                        'Location',
-                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                      ),
-                      MultiSelectDialogField(
-                        items: vm.locations
-                            .map((loc) => MultiSelectItem(loc.locationCode, loc.locationName))
-                            .toList(),
-                        title: Text("Pilih Lokasi"),
-                        buttonText: Text("Klik untuk pilih lokasi"),
-                        initialValue: _selectedLocations.toList(),
-                        searchable: true,
-                        listType: MultiSelectListType.CHIP,
-                        onConfirm: (values) {
-                          setModalState(() {
-                            _selectedLocations = values.toSet().cast<String>();
-                          });
-                        },
-                        chipDisplay: MultiSelectChipDisplay(
-                          scroll: true, // Aktifkan scroll
-                          height: 50, // Batasi tinggi untuk area scroll
-                          chipColor: Colors.orange.shade100, // Warna latar belakang chip yang tidak dipilih
-                          textStyle: TextStyle(
-                            color: Colors.orange,
-                          ),
-                        ),
-                        selectedColor: Colors.orange.shade100,
-                        selectedItemsTextStyle: TextStyle(
-                          color: Colors.orange,
-                        ),
-                        cancelText: Text("Batal"), // Mengubah teks tombol Cancel
-                        confirmText: Text("Pilih"), // Mengubah teks tombol Confirm (OK)
-                      ),
-
-
-                      const SizedBox(height: 24),
-                      Center(
-                        child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.pop(context);
-                            print("📦 Company: ${_selectedCompanies.join(', ')}");
-                            print("📂 Category: ${_selectedCategories.join(', ')}");
-                            print("📂 Location: ${_selectedLocations.join(', ')}");
-
-                            final viewModel = Provider.of<StockOpnameInputViewModel>(context, listen: false);
-                            viewModel.fetchAssetsAfter(
-                              widget.noSO,
-                              companyFilters: _selectedCompanies.toList(),
-                              categoryFilters: _selectedCategories.toList(),
-                              locationFilters: _selectedLocations.toList(),
-                            );
-                            viewModel.fetchAssetsBefore(
-                              widget.noSO,
-                              companyFilters: _selectedCompanies.toList(),
-                              categoryFilters: _selectedCategories.toList(),
-                              locationFilters: _selectedLocations.toList(),
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF7a1b0c),
-                            minimumSize: Size(double.infinity, 48),  // Lebar penuh dan tinggi tombol
-                            padding: EdgeInsets.symmetric(vertical: 14),  // Padding vertikal yang lebih besar
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),  // Sudut tombol yang lebih membulat
-                            ),
-                          ),
-                          child: Text(
-                            'Terapkan Filter',  // Teks tombol
-                            style: TextStyle(
-                              fontSize: 16,  // Ukuran font
-                              fontWeight: FontWeight.bold,  // Menambah ketebalan teks
-                              color: Colors.white,  // Teks berwarna putih
-                            ),
-                          ),
-
-                        ),
-                      ),
-                    ],
-                  );
-                },
-              ),
-            );
-          },
+    // Pastikan data sudah di-fetch dulu, baru tampilkan modal
+    if (masterVM.companies.isEmpty) {
+      masterVM.fetchMasterData().then((_) {
+        // Setelah data siap, tampilkan modal
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          builder: (_) => FilterModalWidget(noSO: noSO),
         );
-      },
-    );
+      });
+    } else {
+      // Data sudah ada, langsung tampilkan modal
+      showModalBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        builder: (_) => FilterModalWidget(noSO: noSO),
+      );
+    }
   }
 
 
@@ -563,12 +432,31 @@ class _StockOpnameInputScreenState extends State<StockOpnameInputScreen> {
 
   void _showLaporanSOPdf(BuildContext context) async {
     final viewModel = context.read<ReportViewModel>();
-    await viewModel.downloadAndOpenPdf(widget.noSO);
 
-    // Tidak perlu navigation ke halaman baru
-    // Karena PDF akan terbuka di aplikasi terpisah
+    // Tampilkan loading dialog sebelum memulai proses
+    showDialog(
+      context: context,
+      barrierDismissible: false, // User tidak bisa menutup dialog dengan tap di luar
+      builder: (context) => const Center(
+        child: CircularProgressIndicator(),
+      ),
+    );
+
+    await viewModel.downloadAndOpenPdf(
+      widget.noSO,
+      widget.tgl,
+      widget.company.join(', '),
+    );
+
+    // Tutup loading dialog setelah selesai (baik sukses maupun error)
+    Navigator.of(context).pop();
+
+    // Jika ada error, tampilkan snackbar
+    if (viewModel.error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(viewModel.error!)),
+      );
+    }
   }
-
-
 
 }

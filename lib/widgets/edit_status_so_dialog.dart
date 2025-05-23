@@ -62,6 +62,10 @@ class _StatusEditDialogState extends State<StatusEditDialog> {
                   ),
                   SizedBox(width: 8),
                   ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF7a1b0c),
+                      foregroundColor: Colors.white,
+                    ),
                     onPressed: () {
                       Navigator.pop(context, _controller.text.trim());
                     },

@@ -110,6 +110,7 @@ class _ItemNoAssetCodeState extends State<ItemNoAssetCode> {
           : FloatingActionButton(
         onPressed: () => _showAddDialog(),
         backgroundColor: const Color(0xFF7a1b0c),
+        foregroundColor: Colors.white,
         child: const Icon(Icons.add),
         tooltip: 'Tambah Data No Asset',
       ),
