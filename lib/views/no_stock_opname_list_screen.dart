@@ -168,17 +168,14 @@ class _StockOpnameListScreenState extends State<StockOpnameListScreen> {
                             children: [
                               // NoSO
                               Text(
-                                stockOpname.noSO,
+                                '${stockOpname.noSO}${stockOpname.isBOM == 1 ? " (BOM)" : ""}',
                                 style: const TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                   color: Color(0xFF1a1a1a),
                                 ),
                               ),
-                              if (stockOpname.isBOM == 1) ...[
-                                const SizedBox(width: 6),
-                                const Icon(Icons.warning_amber_rounded, color: Colors.red, size: 18),
-                              ],
+
                               // Tanggal
                               Text(
                                 stockOpname.tgl,

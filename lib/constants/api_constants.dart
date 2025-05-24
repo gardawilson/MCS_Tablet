@@ -24,6 +24,9 @@ class ApiConstants {
   static String get updateSO => '$baseUrl/api/update-stock-opname';
   static String get uploadImg => '$baseUrl/api/upload-image';
   static String get editAssetImg => '$baseUrl/api/edit-image';
+  static String get addNonAsset => '$baseUrl/api/no-asset-stock-opname/create';
+  static String get deleteNonAsset => '$baseUrl/api/no-asset-stock-opname/delete';
+  static String updateNonAsset(int idNonAsset) => '$baseUrl/api/no-asset-stock-opname/update/$idNonAsset';
   static String viewAssetImg(String imgName) => '$baseUrl/api/upload/$imgName';
   static String deleteStatusSO(int idstatus) => '$baseUrl/api/status/$idstatus';
   static String updateStatusSO(int idstatus) => '$baseUrl/api/status/$idstatus';

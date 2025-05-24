@@ -63,7 +63,7 @@ class NoAssetViewModel extends ChangeNotifier {
       if (token == null) throw Exception("Token not found");
 
       final response = await http.post(
-        Uri.parse('http://192.168.11.153:6000/api/no-asset-stock-opname/create'),
+        Uri.parse(ApiConstants.addNonAsset),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -103,7 +103,7 @@ class NoAssetViewModel extends ChangeNotifier {
       if (token == null) throw Exception("Token not found");
 
       final response = await http.post(
-        Uri.parse('http://192.168.11.153:6000/api/no-asset-stock-opname/DELETE'),
+        Uri.parse(ApiConstants.deleteNonAsset),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
@@ -274,7 +274,7 @@ class NoAssetViewModel extends ChangeNotifier {
       if (token == null) throw Exception("Token not found");
 
       final response = await http.put(
-        Uri.parse('http://192.168.11.153:6000/api/no-asset-stock-opname/update/$idNonAsset'),
+        Uri.parse(ApiConstants.updateNonAsset(idNonAsset)),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $token',
